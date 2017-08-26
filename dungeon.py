@@ -1,4 +1,5 @@
 import random, time, sys
+from file_helpers import *
 
 '''
 class Character():
@@ -32,6 +33,7 @@ class Player():
 		self.ap = ap
 		self.dp = dp
 		self.inventory = items
+		self.equipped = []
 
 	def take_dmg(self, dmg):
 		self.hp = self.hp - dmg
@@ -58,13 +60,21 @@ class Player():
 		else:
 			return False
 
+	def use_potion(self):
+		if (self.hp + 20) > self.maxhp:
+			self.hp = self.maxhp
+		else:
+			self.hp += 20
+		self.inventory.remove('healing_potion')
+		print('You used a healing_potion')
+
 class Enemy():
 
 	def __init__(self, name, maxhp = 100, ap = 20):
 		self.name = name
 		self.maxhp = random.randint(0, maxhp)
 		self.hp = self.maxhp
-		self.ap = random.randint(0, ap)
+		self.ap = random.randint(2, ap)
 
 	def take_dmg(self, dmg):
 		self.hp = self.hp - dmg
@@ -79,61 +89,39 @@ class Enemy():
 		return random.randint(0, self.ap)
 
 	def drop_loot(self):
-		loot = ['', 'dagger', 'gauntlets', 'healing potion', 'smooth stone']
-		randchoice = random.randint(0,len(loot))
+		loot = ['', 'dagger', 'gauntlets', 'healing_potion', 'sword', 'battle-axe', 'breastplate', 'boots', 'leg_plates', 'artifact']
+		randchoice = random.randint(0,len(loot) - 1)
 		return loot[randchoice]
+
+	def gui(self):
+		borderfy_text('Name: ' + self.name + ' || HP: ' + str(self.hp))
 
 class Dungeon():
 
-	def __init__(self, name, start_pos = 1):
-		self.dungeon = {1: {"name" : "entrance", "description" : "An unkept cube of a room that looks like a once lush entrance.", "loot" : "", "enemy" : "", "north" : 2}, 2: {"name" : "barracks", "loot" : "", "enemy" : "", "east" : 3, "south": 1}, 3: {"name" : "grand hall", "loot" : "", "enemy" : "", "south" : 4, "west" : 2}, 4: {"name" : "treasure room", "loot" : "", "enemy" : "", "north" : 3, "south" : 100}, 100: {"name" : 'exit'}}
+	def __init__(self, start_pos = 1, dungeon = 1):
+		self.dungeon = load_dungeon('dungeon' + str(dungeon) + '.txt')
 		self.current_pos = start_pos
 		self.visited = list()
-		self.pl = Player(name)
-		self.running = True
 
 	def check_game_state(self):
-		if self.pl.is_dead():
-			self.running = False
-			print('You died! Better luck next time.')
+		if pl.is_dead():
+			self.death_handler()
 		elif self.dungeon[self.current_pos]['name'] == 'exit':
-			self.running = False
-			print('You made it!')
+			return False
 		else:
-			pass
-
-	def borderfy_text(self, text):
-		border = ''
-		output_text = '# '
-		counter = 0
-		var = 4 + len(text)
-
-		while counter < var:
-			border += '#'
-			counter += 1
-
-		output_text += text
-		output_text = output_text + ' #'
-
-		print(border)
-		print(output_text)
-		print(border)
+			return True
 
 	def gui(self):
-		self.borderfy_text('Name: ' + self.pl.name + ' || HP: ' + str(self.pl.hp) + ' || Location: ' + str(self.current()))
-		inv_items = 'Inventory: '
-		for i in self.pl.inventory:
-			inv_items = inv_items + i + ', '
-		self.borderfy_text(inv_items)
+		borderfy_text('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + ' || Location: ' + str(self.current()))
 
 	def game_loop(self):
-		while self.running:
-			self.gui()
+		global running
+		running = True
+		while self.check_game_state():
 			self.room_handler()
-			self.describe_room()
 			self.move_room()
-			print('\n'*50)
-			self.check_game_state()
+			self.scene_splitter()
+		self.win_handler()
 
 	def current(self):
 		return self.dungeon[self.current_pos]['name']
@@ -145,15 +133,25 @@ class Dungeon():
 				pass
 			else:
 				print(' * ' + i)
+		print('You can:')
+		print('* inventory')
+		if 'healing_potion' in pl.inventory:
+					print('* use healing_potion')
 
 	def move_room(self):
 		self.get_moves()
-		move = input('-> ')
+		move = input('> ')
 		if move == 'quit':
 			sys.exit(1)
-		if move in self.dungeon[self.current_pos]:
-			self.visited.append(self.current_pos)
+		elif move in self.dungeon[self.current_pos]:
 			self.current_pos = self.dungeon[self.current_pos][move]
+		elif move == 'inventory':
+			self.inventory_handler()
+		elif move == 'use healing_potion' and 'healing_potion' in pl.inventory:
+			if (pl.hp + 20) > pl.maxhp:
+				pl.hp = pl.maxhp
+			else:
+				pl.hp += 20
 		else:
 			print('Invalid direction')
 
@@ -167,68 +165,327 @@ class Dungeon():
 			pass
 
 	def death_handler(self):
-		print('You dead')
+		print('\n'*1000)
+		print(" ____  ____                  ______     _               __  ")
+		print("|_  _||_  _|                |_   _ `.  (_)             |  ] ")
+		print("  \ \  / / .--.   __   _      | | `. \ __  .---.   .--.| |  ")
+		print("   \ \/ // .'`\ \[  | | |     | |  | |[  |/ /__\\/ /'`\' |  ")
+		print("   _|  |_| \__. | | \_/ |,   _| |_.' / | || \__.,| \__/  |  ")
+		print("  |______|'.__.'  '.__.'_/  |______.' [___]'.__.' '.__.;__] ")
+		print("                                                            ")
+		print('')
+		print('Upon death you...')
+		try:
+			input("Press Enter to continue...")
+		except SyntaxError:
+			pass
 		sys.exit(1)
 
-	def room_handler(self):
-		if self.dungeon[self.current_pos]['enemy'] != '':
-			en = Enemy(self.dungeon[self.current_pos]['enemy'])
-			print('You come across a ' + en.name + '!')
-			print('Prepare to fight!')
-			time.sleep(2)
-			while True:
-				print('\n'*50)
+	def win_handler(self):
+		print('\n'*1000)
+		print(" ____  ____                  ____    ____               __          _____  _    ")
+		print("|_  _||_  _|                |_   \  /   _|             |  ]        |_   _|/ |_  ")
+		print("  \ \  / / .--.   __   _      |   \/   |   ,--.    .--.| | .---.     | | `| |-' ")
+		print("   \ \/ // .'`\ \[  | | |     | |\  /| |  `'_\ : / /'`\' |/ /__\\    | |  | |   ")
+		print("   _|  |_| \__. | | \_/ |,   _| |_\/_| |_ // | |,| \__/  || \__.,   _| |_ | |,  ")
+		print("  |______|'.__.'  '.__.'_/  |_____||_____|\'-;__/ '.__.;__]'.__.'  |_____|\__/  ")
+		print("                                                                                ")
+		print("Upon making it out...")
+		try:
+			input("Press Enter to continue...")
+		except SyntaxError:
+			pass
+
+	def scene_splitter(self):
+		print('/'*70)
+		print('/'*70)
+		print('/'*70)
+
+	def no_similar_weapon_equipped(item):
+		loot = ['dagger', 'sword', 'battle-axe']
+		loot.remove(item)
+		for element in loot:
+			if element in pl.equipped:
+				return False
+		return True
+
+	def battler(self):
+		while True:
+				self.scene_splitter()
 				self.gui()
-				print('Would you like to attack or defend?')
+				self.en.gui()
+				print('WWhat would you like to do?')
+				print('* attack')
+				print('* defend')
+				if 'healing_potion' in pl.inventory:
+					print('* use healing_potion')
 				action = input('> ')
 				if action == 'attack':
-					en.take_dmg(self.pl.get_atk())
-					if en.hp > 0:
-						self.pl.take_dmg(en.get_atk())
+					self.en.take_dmg(pl.get_atk())
+					if self.en.hp > 0:
+						pl.take_dmg(self.en.get_atk())
 					else:
 						pass
 				elif action == 'defend':
-					self.pl.take_dmg(en.get_atk() - self.pl.dp)
+					enem_atk = self.en.get_atk() - pl.dp
+					if enem_atk < 0:
+						pl.take_dmg(0)
+					else:
+						pl.take_dmg(enem_atk)
+				elif action == 'use healing_potion' and 'healing_potion' in pl.inventory:
+					pl.use_potion()
 				else:
 					pass
-				if en.is_dead():
+				if self.en.is_dead():
 					break
-				if self.pl.is_dead():
+				if pl.is_dead():
 					self.death_handler()
-			fight_loot = en.drop_loot()
+
+	def room_handler(self):
+		self.gui()
+
+		#If enemy present, fight
+		if self.dungeon[self.current_pos]['enemy'] != '' and self.current_pos not in self.visited:
+			self.en = Enemy(self.dungeon[self.current_pos]['enemy'])
+			print('You come across a ' + self.en.name + '!')
+			print('Prepare to fight!')
+			time.sleep(2)
+			self.battler()
+			print('You defeated the pathetic ' + self.en.name + '!')
+			fight_loot = self.en.drop_loot()
 			if fight_loot == '':
-				print("The lousy " + en.name + " didn't have anything on it")
+				print("The lousy " + self.en.name + " didn't have anything on it")
 			else:
-				print('You find a ' + fight_loot + ' on the corpse.')
-				self.pl.inventory.append(fight_loot)
-				for i in self.pl.inventory:
-					print('* ' + i)
+				print('You find ' + fight_loot + ' on the corpse.')
+				pl.inventory.append(fight_loot)
+			self.scene_splitter()
+			self.gui()
 		else:
 			pass
 
+		#If loot present, loot
 		if self.dungeon[self.current_pos]['loot'] != '' and self.current_pos not in self.visited:
-			#Describe loot and acquire it
+			pl.inventory.append(self.dungeon[self.current_pos]['loot'])
+			#self.gui()
 			print('You find ' + self.dungeon[self.current_pos]['loot'])
-			self.pl.inventory.append(self.dungeon[self.current_pos]['loot'])
+			print('--------------------------------------------')
 		else:
 			pass
+
+		self.describe_room()
+		self.visited.append(self.current_pos)
+
+	def inventory_handler(self):
+		state = True
+		while state:
+			self.scene_splitter()
+			print('Inventory:')
+			for i in pl.inventory:
+				print('* ' + i)
+			print('----------------')
+
+			print('Options: ')
+			print('* equip _____')
+			print('* unequip _____')
+			print('* drop _____')
+			print('* use _____')
+			print('* sort_gold')
+			print('* back')
+			option = input('> ')
+			opts = option.split(' ')
+			if opts[0] == 'equip':
+				#loot: dagger, gauntlets, healing_potion, sword, battle-axe
+				#      breastplate, boots, leg_plates, artifact
+				try:
+					if opts[1] not in pl.inventory:
+						print(opts[1] + ' is not in your inventory.')
+					elif opts[1] not in pl.equipped and opts[1] != '':
+						if opts[1] == 'gauntlets':
+							pl.equipped.append('gauntlets')
+							pl.dp += 2
+							print('You have now equipped ' + opts[1])
+						elif opts[1] == 'dagger':
+							if self.no_similar_weapon_equipped(opts[1]):
+								pl.equipped.append('dagger')
+								pl.ap += 2
+								print('You have now equipped ' + opts[1])
+							else:
+								print('You already have a weapon equipped.')
+						elif opts[1] == 'sword':
+							if self.no_similar_weapon_equipped(opts[1]):
+								pl.equipped.append(opts[1])
+								pl.ap += 4
+								print('You have now equipped ' + opts[1])
+							else:
+								print('You already have a weapon equipped.')
+						elif opts[1] == 'battle-axe':
+							if self.no_similar_weapon_equipped(opts[1]):
+								pl.equipped.append('battle-axe')
+								pl.ap += 6
+								print('You have now equipped ' + opts[1])
+							else:
+								print('You already have a weapon equipped.')
+						elif opts[1] == 'breastplate':
+							pl.equipped.append(opts[1])
+							pl.dp += 4
+							print('You have now equipped ' + opts[1])
+						elif opts[1] == 'boots':
+							pl.equipped.append(opts[1])
+							pl.dp += 2
+							print('You have now equipped ' + opts[1])
+						elif opts[1] == 'leg_plates':
+							pl.equipped.append(opts[1])
+							pl.dp += 2
+							print('You have now equipped ' + opts[1])
+						else:
+							print(opts[1] + ' is not equipable.')
+					else:
+						print('You have already equipped this item.')
+				except IndexError:
+					print('Please enter what item you would like to equip after you type "equip".')
+			elif opts[0] == 'unequip':
+				try:
+					if opts[1] not in pl.equipped:
+						print(opts[1] + ' is not equipped.')
+					elif opts[1] != '':
+						if opts[1] == 'gauntlets':
+							pl.equipped.remove('gauntlets')
+							pl.dp -= 2
+							print('You have now unequipped ' + opts[1])
+						elif opts[1] == 'dagger':
+							pl.equipped.remove('dagger')
+							pl.ap -= 2
+							print('You have now unequipped ' + opts[1])
+						elif opts[1] == 'sword':
+							pl.equipped.remove(opts[1])
+							pl.ap -= 4
+							print('You have now unequipped ' + opts[1])
+						elif opts[1] == 'battle-axe':
+							pl.equipped.remove(opts[1])
+							pl.ap -= 6
+							print('You have now unequipped ' + opts[1])
+						elif opts[1] == 'breastplate':
+							pl.equipped.remove(opts[1])
+							pl.ap -= 4
+							print('You have now unequipped ' + opts[1])
+						elif opts[1] == 'boots':
+							pl.equipped.remove(opts[1])
+							pl.ap -= 2
+							print('You have now unequipped ' + opts[1])
+						elif opts[1] == 'leg_plates':
+							pl.equipped.remove(opts[1])
+							pl.ap -= 2
+							print('You have now unequipped ' + opts[1])
+					else:
+						print('GAH')
+				except IndexError:
+					print('Please enter what item you would like to unequip after you type "unequip".')
+			elif opts[0] == 'drop':
+				try:
+					temp_fre = 0
+					for inve in pl.inventory:
+						if inve == opts[1]:
+							temp_fre += 1
+					if opts[1] not in pl.inventory:
+						print('You do not have this item.')
+					elif opts[1] in pl.equipped and temp_fre == 1:
+						print('You must first unequip ' + opts[1])
+					else:
+						pl.inventory.remove(opts[1])
+						print(opts[1] + ' has now been removed from your inventory.')
+				except IndexError:
+					print('Please enter what item you would like to drop after you type "drop".')
+			elif opts[0] == 'use':
+				#Handle using items
+				try:
+					if opts[1] not in pl.inventory:
+						print('You do not have this item.')
+					else:
+						if opts[1] == 'healing_potion':
+							pl.use_potion()
+				except IndexError:
+					print('Please enter what item you would like to use after you type "use".')
+			elif option == 'sort_gold':
+				temp_li = list()
+				temp_tot = 0
+				for ite in pl.inventory:
+					if ite.split('_')[1] == 'gold':
+						temp_li.append(ite)
+						pl.inventory.remove(ite)
+					else:
+						pass
+				for ite in temp_li:
+					temp_tot += int(ite.split('_')[0])
+				pl.inventory.append(str(temp_tot) + '_gold')
+			elif option == 'back':
+				state = False
+			else:
+				pass
 		
 ##### Game Initialization #####
-print('\n'*1000)
-print(" ______                       ___                            _    ")
-print("|_   _ `.                   .'   `.                         / |_  ")
-print("  | | `. \ __   _   _ .--. /  .-.  \  __   _   .---.  .--. `| |-' ")
-print("  | |  | |[  | | | [ `.-. || |   | | [  | | | / /__\\( (`\] | |   ")
-print(" _| |_.' / | \_/ |, | | | |\  `-'  \_ | \_/ |,| \__., `'.'. | |,  ")
-print("|______.'  '.__.'_/[___||__]`.___.\__|'.__.'_/ '.__.'[\__) )\__/  ")
-print("                                                                  ")
-print('    Welcome to DunQuest! A game of infinite possibilities!')
-time.sleep(3)
-print('\n'*1000)
+running = True
+pl = Player('Player')
 
-print('What is your name?')
-name = input('> ')
-print('\n'*1000)
+while running:
+	print('\n'*1000)
+	print(" ______                       ___                            _    ")
+	print("|_   _ `.                   .'   `.                         / |_  ")
+	print("  | | `. \ __   _   _ .--. /  .-.  \  __   _   .---.  .--. `| |-' ")
+	print("  | |  | |[  | | | [ `.-. || |   | | [  | | | / /__\\( (`\] | |   ")
+	print(" _| |_.' / | \_/ |, | | | |\  `-'  \_ | \_/ |,| \__., `'.'. | |,  ")
+	print("|______.'  '.__.'_/[___||__]`.___.\__|'.__.'_/ '.__.'[\__) )\__/  ")
+	print("                                                                  ")
+	print('    Welcome to DunQuest! A game of infinite possibilities!')
+	print('')
+	print('* play dungeon ____')
+	print('* high scores')
+	print('* help')
+	print('* quit')
+	choice = input('> ')
+	spl_choice = choice.split(' ')
+	try:
+		pldun = spl_choice[0] + ' ' + spl_choice[1]
+	except IndexError:
+		pass
+	if choice == 'high scores':
+		print('Coming soon.')
+		try:
+			input("Press Enter to continue...")
+		except SyntaxError:
+			pass
+	if choice == 'help':
+		print('Coming soon.')
+		try:
+			input("Press Enter to continue...")
+		except SyntaxError:
+			pass
+	if choice == 'quit':
+		running = False
+	if pldun == 'play dungeon':
+		if isinstance(int(spl_choice[2]), int):
+			print('\n'*1000)
+			print('What is your name?')
+			name = input('> ')
+			pl.name = name
+			print('\n'*1000)
+			du = Dungeon(1, int(spl_choice[2]))
+			du.game_loop()
+		else:
+			print('Please enter a number after "play dungeon".')
+			try:
+				input("Press Enter to continue...")
+			except SyntaxError:
+				pass
+	else:
+		print('Invalid input.')
+		try:
+			input("Press Enter to continue...")
+		except SyntaxError:
+			pass
 
-du = Dungeon(name)
-du.game_loop()
+'''
+try:
+	input("Press Enter to continue...")
+except SyntaxError:
+	pass
+'''
