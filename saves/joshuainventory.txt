@@ -1,0 +1,7 @@
+gauntlets
+leg_plates
+artifact
+battle-axe
+artifact
+dagger
+dagger
