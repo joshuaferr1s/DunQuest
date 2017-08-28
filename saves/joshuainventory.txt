@@ -5,3 +5,9 @@ battle-axe
 artifact
 dagger
 dagger
+boots
+breastplate
+boots
+healing_potion
+artifact
+healing_potion

@@ -1,3 +1,5 @@
 gauntlets
 leg_plates
 battle-axe
+breastplate
+boots

@@ -66,3 +66,10 @@ def get_save_files():
 	for _ in saves:
 		save_files.append(_.replace('.txt', ''))
 	return save_files
+
+def get_dungeon_files():
+	dungeons = os.listdir('dungeons/')
+	dungeons_files = list()
+	for _ in dungeons:
+		dungeons_files.append(_.replace('.txt', ''))
+	return dungeons_files

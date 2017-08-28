@@ -1,4 +1,4 @@
-import random, time, sys
+import random, time, sys, math
 from file_helpers import *
 
 '''
@@ -26,7 +26,7 @@ class Character():
 
 class Player():
 
-	def __init__(self, name, gold = 0, maxhp = 100, ap = 20, dp = 2, items = []):
+	def __init__(self, name, gold = 0, maxhp = 20, ap = 5, dp = 1, items = []):
 		self.name = name
 		self.gold = gold
 		self.maxhp = maxhp
@@ -61,21 +61,27 @@ class Player():
 		else:
 			return False
 
-	def use_potion(self):
-		if (self.hp + 20) > self.maxhp:
+	def use_potion(self, potion_type):
+		if potion_type == 'healing_potion':
+			if (self.hp + 5) > self.maxhp:
+				self.hp = self.maxhp
+			else:
+				self.hp += 5
+			self.inventory.remove('healing_potion')
+			print('You used a healing_potion')
+		elif potion_type == 'purple_liquid':
 			self.hp = self.maxhp
-		else:
-			self.hp += 20
-		self.inventory.remove('healing_potion')
-		print('You used a healing_potion')
+			self.inventory.remove('purple_liquid')
+			print('You used a vial of purple_liquid')
 
 class Enemy():
 
-	def __init__(self, name, maxhp = 100, ap = 20):
+	def __init__(self, name, cr):
 		self.name = name
-		self.maxhp = random.randint(0, maxhp)
+		self.cr = cr
+		self.maxhp = random.randint(0, 10) + self.cr*3
 		self.hp = self.maxhp
-		self.ap = random.randint(2, ap)
+		self.ap = random.randint(2, 5) + self.cr*2
 
 	def take_dmg(self, dmg):
 		self.hp = self.hp - dmg
@@ -90,22 +96,32 @@ class Enemy():
 		return random.randint(0, self.ap)
 
 	def drop_loot(self):
-		loot = ['', 'rusty_dagger', 'gauntlets', 'healing_potion', 'sword', 'battle-axe', 'breastplate', 'boots', 'leg_plates', 'artifact']
+		loot = ['', 'rusty_dagger', 'gauntlets', 'healing_potion', 'sword', 'battle-axe', 'breastplate', 'boots', 'leg_plates', 'artifact', 'purple_liquid']
 		randchoice = random.randint(0,len(loot) - 1)
 		return loot[randchoice]
+
+	def drop_gold(self):
+		return random.randint(0, math.floor(self.maxhp/3)) + self.cr
 
 	def gui(self):
 		borderfy_text('Name: ' + self.name + ' || HP: ' + str(self.hp))
 
-class Merchant():
+class Npc():
 
-	def __init__(self):
+	def __init__(self, name = 'npc', items = list(), items_buy = list(), items_sell = list()):
+		self.name = name
 		self.gold = 10
 		self.met = False
 		self.trust = False
-		self.items = ['healing_potion', 'artifact', 'purple_liquid']
-		self.items_buy = {'healing_potion' : 2, 'artifact' : 5, 'purple_liquid' : 13}
-		self.items_sell = {'healing_potion' : 4, 'artifact' : 7, 'purple_liquid' : 15}
+		self.items = items
+		self.items_buy = items_buy
+		self.items_sell = items_sell
+
+	def new(self, name, items, items_buy, items_sell):
+		self.name = name
+		self.items = items
+		self.items_buy = items_buy
+		self.items_sell = items_sell
 
 	def interact(self):
 		if not self.met:
@@ -116,45 +132,58 @@ class Merchant():
 
 	def introduction(self):
 		self.met = True
-		print('Well howdy, young traveller!')
-		print("I seem to have lost my way but I ain't lost my wears.")
+		print(self.name + ': Well howdy, young traveller!')
+		print(self.name + ":I seem to have lost my way but I ain't lost my wears.")
 
 	def trust_test(self):
 		if not self.trust:
 			loop = True
 			while loop:
-				print('May I ask who I am speaking with?')
+				print(self.name + ': May I ask who I am speaking with?')
 				print('* yes')
 				print('* no')
 				choi = input('> ')
 				if choi == 'yes':
 					self.trust = True
-					print('Well hello there ' + pl.name)
-					print('Pleased to make your acquaintance!')
+					print(self.name + ': Well hello there ' + pl.name)
+					print(self.name + ': Pleased to make your acquaintance!')
 					loop = False
 				elif choi == 'no':
-					print('Well fine be like that!')
+					print(self.name + ': Well fine be like that!')
 					loop = False
 				else:
 					print('Invalid Input.')
 
 	def set_prices(self):
 		if not self.trust:
-			for i in items:
+			for i in self.items:
 				self.items_buy[i] += 2
 				self.items_sell[i] -= 2
+
+	def gui(self):
+		borderfy_text('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + ' || Gold: ' + str(pl.gold))
 
 	def shop(self):
 		loop = True
 		while loop:
+			self.gui()
+			print('--------------------------------')
+			print('Inventory:')
+			for i in pl.inventory:
+				if i in pl.equipped:
+					print('* (E) ' + i)
+				else:
+					print('* ' + i)
 			print('--------------------------------')
 			print('Items:')
 			for i in self.items:
 				print('* ' + i + ' | ' + str(self.items_buy[i]) + ' | ' + str(self.items_sell[i]))
 			print('')
 			print('Actions:')
+			print('* buy ____')
+			print('* sell ____')
 			print('* help')
-			print('* quit')
+			print('* leave')
 			choi = input('> ')
 			choic = choi.split(' ')
 			try:
@@ -168,8 +197,8 @@ class Merchant():
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
-			elif choi == 'quit':
-				print('Farewell and good luck!')
+			elif choi == 'leave':
+				print(self.name + ': Farewell and good luck!')
 				loop = False
 				try:
 					input("Press Enter to continue...")
@@ -177,34 +206,37 @@ class Merchant():
 					pass
 			elif chac != 'Failed' and choic[0] == 'buy' and choic[1] in self.items:
 				if pl.gold >= self.items_buy[choic[1]]:
-					print('Merchant: You are now the proud owner of ' + choic[1])
+					print(self.name + ': You are now the proud owner of ' + choic[1])
 					pl.gold -= self.items_buy[choic[1]]
 					self.gold += self.items_buy[choic[1]]
 					pl.inventory.append(choic[1])
-					loop = False
 					try:
 						input("Press Enter to continue...")
 					except SyntaxError:
 						pass
 				else:
-					print('Merchant: I apologize kind sir but you do not have the required funds.')
+					print(self.name + ': I apologize kind sir but you do not have the required funds.')
 
 			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.items:
-				if self.gold >= items_sell[choic[1]]:
+				if self.gold >= self.items_sell[choic[1]]:
 					if choic[1] in pl.inventory:
-						print('Merchant: Thanks for the ' + choic[1])
-						pl.gold += self.items_sell[choic[1]]
-						self.gold -= self.items_sell[choic[1]]
-						pl.inventory.remove(choic[1])
-						loop = False
-						try:
-							input("Press Enter to continue...")
-						except SyntaxError:
-							pass
+						if choic[1] not in pl.equipped:
+							print(self.name + ': Thanks for the ' + choic[1])
+							pl.gold += self.items_sell[choic[1]]
+							self.gold -= self.items_sell[choic[1]]
+							pl.inventory.remove(choic[1])
+							try:
+								input("Press Enter to continue...")
+							except SyntaxError:
+								pass
+						else:
+							print(self.name + ": You'll have to unequip that item first.")
 					else:
-						print('Merchant: Are you trying to rob me child?! I know you do not have that!')
+						print(self.name + ': Are you trying to rob me child?! I know you do not have that!')
 				else:
-					print('Merchant: I apologize kind sir but I do not have the required funds.')
+					print(self.name + ': I apologize kind sir but I do not have the required funds.')
+			elif chac != 'Failed' and (choic[0] == 'buy' or choic[0] == 'sell') and choic[1] not in self.items:
+				print(self.name + ": Sorry partner, we don't deal with that here.")
 			else:
 				print('Invalid Input.')
 				try:
@@ -212,17 +244,16 @@ class Merchant():
 				except SyntaxError:
 					pass
 
-
-
-
-
 class Dungeon():
 
-	def __init__(self, start_pos = 1, dungeon = 1):
-		self.cur_dungeon = dungeon
-		self.dungeon = load_dungeon('dungeon' + str(dungeon) + '.txt')
+	def __init__(self, dungeon = 'dungeon1', start_pos = 1):
+		self.cur_dungeon = dungeon.split('dungeon')[1]
+		self.dungeon = load_dungeon('dungeons/' + dungeon + '.txt')
 		self.current_pos = start_pos
 		self.visited = list()
+		self.rooms = dict()
+		for i in self.dungeon:
+			self.rooms[i] = self.dungeon[i]['name']
 
 	def check_game_state(self):
 		if pl.is_dead():
@@ -237,69 +268,14 @@ class Dungeon():
 
 	def game_loop(self):
 		global running
-		global dungeons_comp
-		global equipped
-		global inventory
-		global player
 		running = True
 		while self.check_game_state():
 			self.room_handler()
 			self.move_room()
-			self.scene_splitter()
+			scene_splitter()
 		self.win_handler()
-		if str(self.cur_dungeon) not in dungeons_comp:
-			dungeons_comp.append(self.cur_dungeon)
-		for i in pl.equipped:
-			equipped.append(i)
-		for i in pl.inventory:
-			inventory.append(i)
-		player.append(pl.name)
-		player.append(pl.gold)
-		player.append(pl.maxhp)
-		player.append(pl.hp)
-		player.append(pl.ap)
-		player.append(pl.dp)
-
-		menu_state = True
-		while menu_state:
-			print('Would you like to save your progress?')
-			print('* yes')
-			print('* no')
-			choi = input('> ')
-			if choi == 'yes':
-				print('Existing savefiles:')
-				for i in save_files:
-					print('* ' + i)
-				print('What would you like your savename to be?')
-				savename = input('> ')
-				if valid_file_name(savename) and savename not in save_files:
-					save_game(savename)
-					menu_state = False
-				elif valid_file_name(savename) and savename in save_files:
-					print('Would you like to overwrite previous savefiles?')
-					print('* yes')
-					print('* no')
-					choi = input('> ')
-					if choi == 'yes':
-						delete_file_contents('saves/' + savename + 'dungeons.txt')
-						delete_file_contents('saves/' + savename + 'equipped.txt')
-						delete_file_contents('saves/' + savename + 'inventory.txt')
-						delete_file_contents('saves/' + savename + 'player.txt')
-						save_game(savename)
-						menu_state = False
-					elif choi == 'no':
-						pass
-					else:
-						print('Invalid input.')
-				else:
-					print('Invalid savename.')
-			elif choi == 'no':
-				menu_state = False
-			else:
-				print('Invalid Input.')
-				print('/'*70)
-				print('/'*70)
-				print('/'*70)
+		update_pot_files(self.cur_dungeon)
+		save_progress()
 
 	def current(self):
 		return self.dungeon[self.current_pos]['name']
@@ -307,14 +283,15 @@ class Dungeon():
 	def get_moves(self):
 		print('You can go:')
 		for i in self.dungeon[self.current_pos]:
-			if i == 'name' or i == 'description' or i == 'loot' or i == 'enemy' or i == 'npc' or i == 'gold':
+			if i == 'name' or i == 'description' or i == 'loot' or i == 'enemy' or i == 'enemy_cr' or i == 'npc' or i == 'gold':
 				pass
 			else:
 				print(' * ' + i)
 		print('You can:')
-		print('* inventory')
-		if 'healing_potion' in pl.inventory:
-					print('* use healing_potion')
+		print('* check inventory')
+		if self.dungeon[self.current_pos]['npc'] != '':
+			print('* talk to npc')
+		print('* quit')
 
 	def move_room(self):
 		self.get_moves()
@@ -323,10 +300,11 @@ class Dungeon():
 			sys.exit(1)
 		elif move in self.dungeon[self.current_pos]:
 			self.current_pos = self.dungeon[self.current_pos][move]
-		elif move == 'inventory':
+		elif move == 'check inventory':
 			self.inventory_handler()
-		elif move == 'use healing_potion' and 'healing_potion' in pl.inventory:
-			pl.use_potion()
+		elif move == 'talk to npc' and self.dungeon[self.current_pos]['npc'] != '':
+			scene_splitter()
+			self.npc_handler(self.dungeon[self.current_pos]['npc'])
 		else:
 			print('Invalid direction')
 
@@ -357,7 +335,7 @@ class Dungeon():
 		sys.exit(1)
 
 	def win_handler(self):
-		print('\n'*1000)
+		print('\n'*100)
 		print(" ____  ____                  ____    ____               __          _____  _    ")
 		print("|_  _||_  _|                |_   \  /   _|             |  ]        |_   _|/ |_  ")
 		print("  \ \  / / .--.   __   _      |   \/   |   ,--.    .--.| | .---.     | | `| |-' ")
@@ -371,11 +349,6 @@ class Dungeon():
 		except SyntaxError:
 			pass
 
-	def scene_splitter(self):
-		print('/'*70)
-		print('/'*70)
-		print('/'*70)
-
 	def no_similar_weapon_equipped(self, item):
 		loot = ['dagger', 'sword', 'battle-axe']
 		loot.remove(item)
@@ -386,7 +359,7 @@ class Dungeon():
 
 	def battler(self):
 		while True:
-				self.scene_splitter()
+				scene_splitter()
 				self.gui()
 				self.en.gui()
 				print('What would you like to do?')
@@ -408,7 +381,7 @@ class Dungeon():
 					else:
 						pl.take_dmg(enem_atk)
 				elif action == 'use healing_potion' and 'healing_potion' in pl.inventory:
-					pl.use_potion()
+					pl.use_potion('healing_potion')
 				else:
 					pass
 				if self.en.is_dead():
@@ -417,26 +390,34 @@ class Dungeon():
 					self.death_handler()
 
 	def npc_handler(self, npc):
-		npcs = dict()
+		global npc_merchant
+		global npc_armorer
+		global npc_blacksmith
 		if npc == 'merchant':
-			self.gui()
 			if self.current_pos not in self.visited:
-				npcs[self.current_pos] = Merchant()
-			npcs[self.current_pos].interact()
+				npc_merchant.new('Merchant', ['healing_potion', 'artifact', 'purple_liquid'], {'healing_potion' : 2, 'artifact' : 5, 'purple_liquid' : 23}, {'healing_potion' : 4, 'artifact' : 7, 'purple_liquid' : 25})
+			npc_merchant.interact()
 
 		elif npc == 'armorer':
-			pass
+			if self.current_pos not in self.visited:
+				npc_armorer.new('Armorer', ['breastplate', 'gauntlets', 'leg_plates', 'helmet', 'boot'], {'breastplate' : 3, 'gauntlets' : 1, 'leg_plates' : 2, 'helmet' : 2, 'boot' : 1}, {'breastplate' : 1, 'gauntlets' : 1, 'leg_plates' : 1, 'helmet' : 1, 'boot' : 1})
+			npc_armorer.interact()
 		elif npc == 'blacksmith':
-			pass
+			if self.current_pos not in self.visited:
+				npc_blacksmith.new('Blacksmith', ['battle-axe', 'dagger', 'sword', 'mace', 'bow', 'arrows', 'crossbow', 'spear'], {'battle-axe' : 10, 'dagger' : 5, 'sword' : 7, 'mace' : 8, 'bow' : 12, 'arrows' : 2, 'crossbow' : 18, 'spear' : 14}, {'battle-axe' : 8, 'dagger': 3, 'sword' : 5, 'mace' : 6, 'bow' : 10, 'arrows' : 1, 'crossbow' : 16, 'spear' : 12})
+			npc_blacksmith.interact()
 		else:
 			pass
+		self.visited.append(self.current_pos)
 
 	def room_handler(self):
+		if self.dungeon[self.current_pos]['gold'] != 0 and self.current_pos not in self.visited:
+			pl.gold += int(self.dungeon[self.current_pos]['gold'])
 		self.gui()
 
 		#If enemy present, fight
 		if self.dungeon[self.current_pos]['enemy'] != '' and self.current_pos not in self.visited:
-			self.en = Enemy(self.dungeon[self.current_pos]['enemy'])
+			self.en = Enemy(self.dungeon[self.current_pos]['enemy'], self.dungeon[self.current_pos]['enemy_cr'])
 			print('You come across a ' + self.en.name + '!')
 			print('Prepare to fight!')
 			time.sleep(2)
@@ -445,23 +426,17 @@ class Dungeon():
 			fight_loot = self.en.drop_loot()
 			fight_gold = self.en.drop_gold()
 			if fight_loot == '':
-				print("The lousy " + self.en.name + " didn't have anything on it!")
+				print("The lousy " + self.en.name + " didn't have any items on it!")
 			else:
 				print('You find ' + fight_loot + ' on the corpse!')
 				pl.inventory.append(fight_loot)
 			if fight_gold > 0:
-				print('You also found ' + str(fight_gold) + ' gold on the corpse')
-			self.scene_splitter()
+				print('You found ' + str(fight_gold) + ' gold on the corpse')
+				pl.gold += fight_gold
+			scene_splitter()
 			self.gui()
 		else:
 			pass
-
-		#If npc present, interact
-		if self.dungeon[self.current_pos]['npc'] != '':
-			self.npc_handler(self.dungeon[self.current_pos]['npc'])
-		else:
-			pass
-
 
 		#If loot present, loot
 		if self.dungeon[self.current_pos]['loot'] != '' and self.current_pos not in self.visited:
@@ -474,27 +449,36 @@ class Dungeon():
 
 		#If gold present, take
 		if self.dungeon[self.current_pos]['gold'] != 0 and self.current_pos not in self.visited:
-			pl.gold += self.dungeon[self.current_pos]['gold']
+			#pl.gold += int(self.dungeon[self.current_pos]['gold'])
 			print('You find ' + str(self.dungeon[self.current_pos]['gold']) + ' gold')
 			print('--------------------------------------------')
 		else:
 			pass
 
 		self.describe_room()
-		self.visited.append(self.current_pos)
+		if self.dungeon[self.current_pos]['npc'] == '':
+			self.visited.append(self.current_pos)
 
 	def inventory_handler(self):
+		item_fre = dict()
+		for ite in pl.inventory:
+			if ite in item_fre:
+				item_fre[ite] += 1
+			else:
+				item_fre[ite] = 1
 		state = True
 		while state:
-			self.scene_splitter()
+			displayed = list()
+			scene_splitter()
+			self.gui()
 			print('Inventory:')
 			for i in pl.inventory:
-				if i in pl.equipped:
+				if i in pl.equipped and i not in displayed:
 					print('* (E) ' + i)
+					displayed.append(i)
 				else:
-					print('(* ' + i)
+					print('* ' + i)
 			print('----------------')
-
 			print('Options: ')
 			print('* equip _____')
 			print('* unequip _____')
@@ -592,13 +576,9 @@ class Dungeon():
 					print('Please enter what item you would like to unequip after you type "unequip".')
 			elif opts[0] == 'drop':
 				try:
-					temp_fre = 0
-					for inve in pl.inventory:
-						if inve == opts[1]:
-							temp_fre += 1
 					if opts[1] not in pl.inventory:
 						print('You do not have this item.')
-					elif opts[1] in pl.equipped and temp_fre == 1:
+					elif opts[1] in pl.equipped and item_fre[opts[1]] == 1:
 						print('You must first unequip ' + opts[1])
 					else:
 						pl.inventory.remove(opts[1])
@@ -612,7 +592,7 @@ class Dungeon():
 						print('You do not have this item.')
 					else:
 						if opts[1] == 'healing_potion':
-							pl.use_potion()
+							pl.use_potion(opts[1])
 				except IndexError:
 					print('Please enter what item you would like to use after you type "use".')
 			elif option == 'back':
@@ -636,20 +616,24 @@ def sort_save_files(sfr):
 		if k not in sf:
 			sf.append(k)
 	return sf
-		
-##### Game Initialization #####
-running = True
-pl = Player('Player')
-dungeons_comp = list()
-equipped = list()
-inventory = list()
-player = list()
-save_files_raw = list()
-try:
-	save_files_raw = get_save_files()
-except FileNotFoundError:
-	pass
-save_files = sort_save_files(save_files_raw)
+
+def update_pot_files(current_dun):
+	global dungeons_comp
+	global equipped
+	global inventory
+	global player
+	if str(current_dun) not in dungeons_comp:
+		dungeons_comp.append('dungeon' + str(current_dun))
+	for i in pl.equipped:
+		equipped.append(i)
+	for i in pl.inventory:
+		inventory.append(i)
+	player.append(pl.name)
+	player.append(pl.gold)
+	player.append(pl.maxhp)
+	player.append(pl.hp)
+	player.append(pl.ap)
+	player.append(pl.dp)
 
 def save_game(savename):
 	global dungeons_comp
@@ -673,6 +657,47 @@ def save_game(savename):
 		#Write to player file
 		for i in player:
 			append_to_file('saves/' + savename + 'player.txt', i)
+
+def save_progress():
+	update_save_files()
+	menu_state = True
+	while menu_state:
+		print('Would you like to save your progress?')
+		print('* yes')
+		print('* no')
+		choice = input('> ')
+		if choice == 'yes':
+			print('Existing savefiles:')
+			for i in save_files:
+				print('* ' + i)
+			print('What would you like your savename to be?')
+			savename = input('> ')
+			if valid_file_name(savename) and savename not in save_files:
+				save_game(savename)
+				menu_state = False
+			elif valid_file_name(savename) and savename in save_files:
+				print('Would you like to overwrite previous savefiles?')
+				print('* yes')
+				print('* no')
+				choice = input('> ')
+				if choice == 'yes':
+					delete_file_contents('saves/' + savename + 'dungeons.txt')
+					delete_file_contents('saves/' + savename + 'equipped.txt')
+					delete_file_contents('saves/' + savename + 'inventory.txt')
+					delete_file_contents('saves/' + savename + 'player.txt')
+					save_game(savename)
+					menu_state = False
+				elif choice == 'no':
+					pass
+				else:
+					print('Invalid input.')
+			else:
+				print('Invalid savename.')
+		elif choice == 'no':
+			menu_state = False
+		else:
+			print('Invalid Input.')
+			scene_splitter()
 
 def load_game(savename):
 	global dungeons_comp
@@ -698,9 +723,45 @@ def load_game(savename):
 	except SyntaxError:
 		pass
 
+def scene_splitter():
+	print('/'*70)
+	print('/'*70)
+	print('/'*70)
+
+def update_save_files():
+	global save_files_raw
+	global save_files
+	global list_dungeons
+	try:
+		list_dungeons = get_dungeon_files()
+	except FileNotFoundError:
+		pass
+	try:
+		save_files_raw = get_save_files()
+	except FileNotFoundError:
+		pass
+	save_files = sort_save_files(save_files_raw)
+
+		
+##### Game Initialization #####
+
+running = True
+pl = Player('Player')
+dungeons_comp = list()
+equipped = list()
+inventory = list()
+player = list()
+save_files_raw = list()
+save_files = list()
+list_dungeons = list()
+npc_merchant = Npc()
+npc_armorer = Npc()
+npc_blacksmith = Npc()
+update_save_files()
+
 # Main Menu
 while running:
-	print('\n'*1000)
+	print('\n'*100)
 	print(" ______                       ___                            _    ")
 	print("|_   _ `.                   .'   `.                         / |_  ")
 	print("  | | `. \ __   _   _ .--. /  .-.  \  __   _   .---.  .--. `| |-' ")
@@ -710,17 +771,13 @@ while running:
 	print("                                                                  ")
 	print('    Welcome to DunQuest! A game of infinite possibilities!')
 	print('')
-	print('* play dungeon ____')
-	print('* load')
+	print('* play')
+	if len(save_files) > 0:
+		print('* load')
 	print('* help')
 	print('* quit')
 	choice = input('> ')
-	spl_choice = choice.split(' ')
-	try:
-		pldun = spl_choice[0] + ' ' + spl_choice[1]
-	except IndexError:
-		pldun = 'Failed'
-	if choice == 'load':
+	if choice == 'load' and len(save_files) > 0:
 		menu_state = True
 		while menu_state:
 			print('Existing savefiles:')
@@ -728,7 +785,7 @@ while running:
 				print('* ' + i)
 			print('What is your savename?')
 			savename = input('> ')
-			if valid_file_name(savename):
+			if valid_file_name(savename) and savename in save_files:
 				load_game(savename)
 				menu_state = False
 			else:
@@ -741,35 +798,53 @@ while running:
 			pass
 	elif choice == 'quit':
 		running = False
-	elif pldun == 'play dungeon':
-		try:
-			int_state = isinstance(int(spl_choice[2]), int)
-		except IndexError:
-			continue
-		except ValueError:
-			continue
-		if int_state:
-			print('\n'*1000)
-			if len(dungeons_comp) < 1:
-				print('What would you like your name to be?')
-				choi = input('> ')
-				pl.name = choi
-			print('\n'*1000)
-			du = Dungeon(1, int(spl_choice[2]))
-			du.game_loop()
-		else:
-			print('Please enter a number after "play dungeon".')
-			try:
-				input("Press Enter to continue...")
-			except SyntaxError:
-				pass
+	elif choice == 'play':
+		menu_state = True
+		while menu_state:
+			able_dungeons = list()
+			for i in list_dungeons:
+				if i not in dungeons_comp:
+					able_dungeons.append(i)
+			if len(able_dungeons) > 0:
+				scene_splitter()
+				print('Dungeons you can play: ')
+				for i in able_dungeons:
+					print('* ' + i)
+				print('Which dungeon would you like to play?')
+				choice = input('> ')
+				if choice in list_dungeons and choice in able_dungeons:
+					menu_state = False
+					print('\n'*100)
+					if len(dungeons_comp) < 1:
+						print('What would you like your name to be?')
+						choi = input('> ')
+						pl.name = choi
+					else:
+						print('Welcome back ' + pl.name)
+						time.sleep(2)
+					print('\n'*100)
+					du = Dungeon(choice)
+					du.game_loop()
+				else:
+					print('Please enter a dungeon name you wish to play.')
+					try:
+						input("Press Enter to continue...")
+					except SyntaxError:
+						pass
+			else:
+				print('Sorry partner, you have completed all available dungeons.')
+				print('Look out for more soon, or create your own!')
+				try:
+					input("Press Enter to continue...")
+				except SyntaxError:
+					pass
+				sys.exit(1)
 	else:
-		print('Invalid input.')
+		print('Invalid Input.')
 		try:
 			input("Press Enter to continue...")
 		except SyntaxError:
 			pass
-
 '''
 try:
 	input("Press Enter to continue...")
