@@ -1,28 +1,5 @@
-import random, time, sys, math
+import random, time, sys, math, textwrap
 from file_helpers import *
-
-'''
-class Character():
-
-	def __init__(self, name, maxhp = 100, ap = 20, dp = 2):
-		self.name = name
-		self.maxhp = maxhp
-		self.hp = self.maxhp
-		self.ap = ap
-		self.dp = dp
-
-	def take_dmg(self, dmg):
-		self.hp = self.hp - dmg
-
-	def is_dead(self):
-		if self.hp < 1:
-			return True
-		else:
-			return False
-
-	def get_atk(self):
-		return random.randint(0, self.ap)
-'''
 
 class Player():
 
@@ -251,6 +228,7 @@ class Dungeon():
 		self.dungeon = load_dungeon('dungeons/' + dungeon + '.txt')
 		self.current_pos = start_pos
 		self.visited = list()
+		self.item_fre = dict()
 		self.rooms = dict()
 		for i in self.dungeon:
 			self.rooms[i] = self.dungeon[i]['name']
@@ -270,6 +248,7 @@ class Dungeon():
 		global running
 		running = True
 		while self.check_game_state():
+			self.dungeon_description()
 			self.room_handler()
 			self.move_room()
 			scene_splitter()
@@ -280,10 +259,29 @@ class Dungeon():
 	def current(self):
 		return self.dungeon[self.current_pos]['name']
 
+	def dungeon_description(self):
+		try:
+			print('/'*70)
+			print('~'*70)
+			print('/'*70)
+			if self.current_pos == 1 and self.current_pos not in self.visited and self.dungeon[self.current_pos]['desc'] != '':
+				dungeon_intro = textwrap.wrap(self.dungeon[self.current_pos]['desc'], 70)
+				for i in dungeon_intro:
+					print(i)
+			print('/'*70)
+			print('~'*70)
+			print('/'*70)
+			try:
+				input("Press Enter to continue...")
+			except SyntaxError:
+				pass
+		except KeyError:
+			pass
+
 	def get_moves(self):
 		print('You can go:')
 		for i in self.dungeon[self.current_pos]:
-			if i == 'name' or i == 'description' or i == 'loot' or i == 'enemy' or i == 'enemy_cr' or i == 'npc' or i == 'gold':
+			if i == 'name' or i == 'desc' or i == 'description' or i == 'loot' or i == 'enemy' or i == 'enemy_cr' or i == 'npc' or i == 'gold':
 				pass
 			else:
 				print(' * ' + i)
@@ -317,7 +315,7 @@ class Dungeon():
 		else:
 			pass
 
-	def death_handler(self):
+	def death_handler(self, how):
 		print('\n'*1000)
 		print(" ____  ____                  ______     _               __  ")
 		print("|_  _||_  _|                |_   _ `.  (_)             |  ] ")
@@ -327,7 +325,14 @@ class Dungeon():
 		print("  |______|'.__.'  '.__.'_/  |______.' [___]'.__.' '.__.;__] ")
 		print("                                                            ")
 		print('')
+		if how == 'spike_pit':
+			print('You fell into a spike pit. Unlucky.')
 		print('Upon death you...')
+		print('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + '/' + str(pl.maxhp) + ' || + Gold: ' + str(pl.gold))
+		print('Room where you died: ' + self.dungeon[self.current_pos]['name'])
+		print('Inventory:')
+		self.inventory_updater()
+
 		try:
 			input("Press Enter to continue...")
 		except SyntaxError:
@@ -344,6 +349,9 @@ class Dungeon():
 		print("  |______|'.__.'  '.__.'_/  |_____||_____|\'-;__/ '.__.;__]'.__.'  |_____|\__/  ")
 		print("                                                                                ")
 		print("Upon making it out...")
+		print('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + '/' + str(pl.maxhp) + ' || Gold: ' + str(pl.gold))
+		print('Inventory:')
+		self.inventory_updater()
 		try:
 			input("Press Enter to continue...")
 		except SyntaxError:
@@ -369,9 +377,9 @@ class Dungeon():
 					print('* use healing_potion')
 				action = input('> ')
 				if action == 'attack':
-					self.en.take_dmg(pl.get_atk())
+					self.en.take_dmg(pl.get_atk() - math.floor(self.en.ap/2))
 					if self.en.hp > 0:
-						pl.take_dmg(self.en.get_atk())
+						pl.take_dmg(self.en.get_atk() - math.floor(pl.ap/2))
 					else:
 						pass
 				elif action == 'defend':
@@ -390,9 +398,7 @@ class Dungeon():
 					self.death_handler()
 
 	def npc_handler(self, npc):
-		global npc_merchant
-		global npc_armorer
-		global npc_blacksmith
+		global npc_merchant, npc_armorer, npc_blacksmith
 		if npc == 'merchant':
 			if self.current_pos not in self.visited:
 				npc_merchant.new('Merchant', ['healing_potion', 'artifact', 'purple_liquid'], {'healing_potion' : 2, 'artifact' : 5, 'purple_liquid' : 23}, {'healing_potion' : 4, 'artifact' : 7, 'purple_liquid' : 25})
@@ -404,13 +410,15 @@ class Dungeon():
 			npc_armorer.interact()
 		elif npc == 'blacksmith':
 			if self.current_pos not in self.visited:
-				npc_blacksmith.new('Blacksmith', ['battle-axe', 'dagger', 'sword', 'mace', 'bow', 'arrows', 'crossbow', 'spear'], {'battle-axe' : 10, 'dagger' : 5, 'sword' : 7, 'mace' : 8, 'bow' : 12, 'arrows' : 2, 'crossbow' : 18, 'spear' : 14}, {'battle-axe' : 8, 'dagger': 3, 'sword' : 5, 'mace' : 6, 'bow' : 10, 'arrows' : 1, 'crossbow' : 16, 'spear' : 12})
+				npc_blacksmith.new('Blacksmith', ['battle-axe', 'dagger', 'sword', 'mace', 'bow', 'arrows'], {'battle-axe' : 10, 'dagger' : 5, 'sword' : 7, 'mace' : 8, 'bow' : 12, 'arrows' : 2, 'crossbow' : 18, 'spear' : 14}, {'battle-axe' : 8, 'dagger': 3, 'sword' : 5, 'mace' : 6, 'bow' : 10, 'arrows' : 1, 'crossbow' : 16, 'spear' : 12})
 			npc_blacksmith.interact()
 		else:
 			pass
 		self.visited.append(self.current_pos)
 
 	def room_handler(self):
+		if self.dungeon[self.current_pos]['name'] == 'spike_pit':
+			self.death_handler('spike_pit')
 		if self.dungeon[self.current_pos]['gold'] != 0 and self.current_pos not in self.visited:
 			pl.gold += int(self.dungeon[self.current_pos]['gold'])
 		self.gui()
@@ -459,25 +467,29 @@ class Dungeon():
 		if self.dungeon[self.current_pos]['npc'] == '':
 			self.visited.append(self.current_pos)
 
-	def inventory_handler(self):
-		item_fre = dict()
+	def inventory_updater(self):
+		displayed = list()
 		for ite in pl.inventory:
-			if ite in item_fre:
-				item_fre[ite] += 1
+			if ite in self.item_fre:
+				self.item_fre[ite] += 1
 			else:
-				item_fre[ite] = 1
+				self.item_fre[ite] = 1
+		print('Inventory:')
+		for i in pl.inventory:
+			if i in pl.equipped and i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i + '(E)')
+				displayed.append(i)
+			elif i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i)
+				displayed.append(i)
+
+	def inventory_handler(self):
+		global weapons_mods, armor_mods, heal_effectors
 		state = True
 		while state:
-			displayed = list()
 			scene_splitter()
 			self.gui()
-			print('Inventory:')
-			for i in pl.inventory:
-				if i in pl.equipped and i not in displayed:
-					print('* (E) ' + i)
-					displayed.append(i)
-				else:
-					print('* ' + i)
+			self.inventory_updater()
 			print('----------------')
 			print('Options: ')
 			print('* equip _____')
@@ -488,49 +500,18 @@ class Dungeon():
 			option = input('> ')
 			opts = option.split(' ')
 			if opts[0] == 'equip':
-				#loot: dagger, gauntlets, healing_potion, sword, battle-axe
-				#      breastplate, boots, leg_plates, artifact
 				try:
 					if opts[1] not in pl.inventory:
 						print(opts[1] + ' is not in your inventory.')
 					elif opts[1] not in pl.equipped and opts[1] != '':
-						if opts[1] == 'gauntlets':
-							pl.equipped.append('gauntlets')
-							pl.dp += 2
-							print('You have now equipped ' + opts[1])
-						elif opts[1] == 'dagger':
-							if self.no_similar_weapon_equipped(opts[1]):
-								pl.equipped.append('dagger')
-								pl.ap += 2
-								print('You have now equipped ' + opts[1])
-							else:
-								print('You already have a weapon equipped.')
-						elif opts[1] == 'sword':
-							if self.no_similar_weapon_equipped(opts[1]):
-								pl.equipped.append(opts[1])
-								pl.ap += 4
-								print('You have now equipped ' + opts[1])
-							else:
-								print('You already have a weapon equipped.')
-						elif opts[1] == 'battle-axe':
-							if self.no_similar_weapon_equipped(opts[1]):
-								pl.equipped.append('battle-axe')
-								pl.ap += 6
-								print('You have now equipped ' + opts[1])
-							else:
-								print('You already have a weapon equipped.')
-						elif opts[1] == 'breastplate':
+						if opts[1] in armor_mods:
 							pl.equipped.append(opts[1])
-							pl.dp += 4
-							print('You have now equipped ' + opts[1])
-						elif opts[1] == 'boots':
+							pl.dp += armor_mods[opts[1]]
+							print('You have now equipped a ' + opts[1])
+						elif opts[1] in weapons_mods:
 							pl.equipped.append(opts[1])
-							pl.dp += 2
-							print('You have now equipped ' + opts[1])
-						elif opts[1] == 'leg_plates':
-							pl.equipped.append(opts[1])
-							pl.dp += 2
-							print('You have now equipped ' + opts[1])
+							pl.ap += weapons_mods[opts[1]]
+							print('You are now wearing a ' + opts[1])
 						else:
 							print(opts[1] + ' is not equipable.')
 					else:
@@ -541,35 +522,17 @@ class Dungeon():
 				try:
 					if opts[1] not in pl.equipped:
 						print(opts[1] + ' is not equipped.')
-					elif opts[1] != '':
-						if opts[1] == 'gauntlets':
-							pl.equipped.remove('gauntlets')
-							pl.dp -= 2
-							print('You have now unequipped ' + opts[1])
-						elif opts[1] == 'dagger':
-							pl.equipped.remove('dagger')
-							pl.ap -= 2
-							print('You have now unequipped ' + opts[1])
-						elif opts[1] == 'sword':
+					elif opts[1] != '' and opts[1] in pl.equipped:
+						if opts[1] in armor_mods:
 							pl.equipped.remove(opts[1])
-							pl.ap -= 4
-							print('You have now unequipped ' + opts[1])
-						elif opts[1] == 'battle-axe':
+							pl.dp -= armor_mods[opts[1]]
+							print('You have unequipped a ' + opts[1])
+						elif opts[1] in weapons_mods:
 							pl.equipped.remove(opts[1])
-							pl.ap -= 6
-							print('You have now unequipped ' + opts[1])
-						elif opts[1] == 'breastplate':
-							pl.equipped.remove(opts[1])
-							pl.ap -= 4
-							print('You have now unequipped ' + opts[1])
-						elif opts[1] == 'boots':
-							pl.equipped.remove(opts[1])
-							pl.ap -= 2
-							print('You have now unequipped ' + opts[1])
-						elif opts[1] == 'leg_plates':
-							pl.equipped.remove(opts[1])
-							pl.ap -= 2
-							print('You have now unequipped ' + opts[1])
+							pl.ap -= weapons_mods[opts[1]]
+							print('You are no longer wearing a ' + opts[1])
+						else:
+							print(opts[1] + ' is not equipable.')
 					else:
 						print('GAH')
 				except IndexError:
@@ -578,7 +541,7 @@ class Dungeon():
 				try:
 					if opts[1] not in pl.inventory:
 						print('You do not have this item.')
-					elif opts[1] in pl.equipped and item_fre[opts[1]] == 1:
+					elif opts[1] in pl.equipped and self.item_fre[opts[1]] == 1:
 						print('You must first unequip ' + opts[1])
 					else:
 						pl.inventory.remove(opts[1])
@@ -586,19 +549,18 @@ class Dungeon():
 				except IndexError:
 					print('Please enter what item you would like to drop after you type "drop".')
 			elif opts[0] == 'use':
-				#Handle using items
 				try:
 					if opts[1] not in pl.inventory:
 						print('You do not have this item.')
 					else:
-						if opts[1] == 'healing_potion':
+						if opts[1] in heal_effectors:
 							pl.use_potion(opts[1])
 				except IndexError:
 					print('Please enter what item you would like to use after you type "use".')
 			elif option == 'back':
 				state = False
 			else:
-				pass
+				print('Invalid Input.')
 
 def sort_save_files(sfr):
 	sf = list()
@@ -744,7 +706,6 @@ def update_save_files():
 
 		
 ##### Game Initialization #####
-
 running = True
 pl = Player('Player')
 dungeons_comp = list()
@@ -757,9 +718,12 @@ list_dungeons = list()
 npc_merchant = Npc()
 npc_armorer = Npc()
 npc_blacksmith = Npc()
+armor_mods = {'rusty_boots' : 1, 'rusty_pants': 1, 'rusty_breastplate' : 2, 'rusty_helmet' : 1, 'elven_boots' : 2, 'elven_pants': 2, 'elven_breastplate' : 3, 'elven_helmet' : 2, 'dwarven_boots' : 3, 'dwarven_pants': 3, 'dwarven_breastplate' : 4, 'dwarven_helmet' : 3, 'mithril_boots' : 10, 'mithril_pants': 10, 'mithril_breastplate' : 15, 'mithril_helmet' : 10}
+weapons_mods = {'rusty_dagger' : 1, 'dagger' : 2, 'sword' : 3, 'battle-axe' : 4, 'mace' : 5, 'bow' : 6}
+heal_effectors = ['healing_potion', 'purple_liquid', 'nutella']
 update_save_files()
 
-# Main Menu
+# Main loop
 while running:
 	print('\n'*100)
 	print(" ______                       ___                            _    ")
