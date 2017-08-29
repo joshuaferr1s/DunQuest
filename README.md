@@ -1,4 +1,4 @@
-# Project Title
+# DunQuest
 
 A 'Simple' text-based RPG game made in my spare time.
 
