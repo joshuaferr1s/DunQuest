@@ -1,5 +1,5 @@
 gauntlets
-leg_plates
+mithril_pants
 battle-axe
-breastplate
-boots
+mithril_breastplate
+mithril_boots
