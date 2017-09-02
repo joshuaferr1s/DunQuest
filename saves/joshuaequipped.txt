@@ -1,5 +1,0 @@
-gauntlets
-mithril_pants
-battle-axe
-mithril_breastplate
-mithril_boots

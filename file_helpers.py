@@ -23,21 +23,22 @@ def borderfy_text(text):
 	print(output_text)
 	print(border)
 
-def create_save_dir():
+def create_save_dir(savename):
 	if not os.path.exists('saves'):
 		os.makedirs('saves')
+	if not os.path.exists('saves/' + savename):
+		os.makedirs('saves/' + savename)
 
 def write_file(path, data):
     with open(path, 'w') as f:
         f.write(data)
 
 def create_save_files(savename):
-	if not os.path.isfile('saves/dungeons.txt') and not os.path.isfile('saves/equipped.txt') and not os.path.isfile('saves/inventory.txt') and not os.path.isfile('saves/player.txt'):
-		write_file('saves/' + savename + 'dungeons.txt', '')
-		write_file('saves/' + savename + 'equipped.txt', '')
-		write_file('saves/' + savename + 'inventory.txt', '')
-		write_file('saves/' + savename + 'player.txt', '')
-		return True
+	write_file('saves/' + savename + '/dungeons.txt', '')
+	write_file('saves/' + savename + '/equipped.txt', '')
+	write_file('saves/' + savename + '/inventory.txt', '')
+	write_file('saves/' + savename + '/player.txt', '')
+	return True
 
 def append_to_file(path, data):
 	with open(path, 'a') as file:
@@ -60,8 +61,19 @@ def valid_file_name(file_name):
 			return False
 	return True
 
+def get_market_files(savename):
+	market = os.listdir('saves/' + savename + '/')
+	markets = list()
+	for _ in market:
+		markets.append('saves/' + savename + '/' + _)
+	return markets
+
+def get_save_dirs():
+	dirs = os.listdir('saves/')
+	return dirs
+
 def get_save_files():
-	saves = os.listdir('saves/')
+	saves = os.listdir('saves')
 	save_files = list()
 	for _ in saves:
 		save_files.append(_.replace('.txt', ''))

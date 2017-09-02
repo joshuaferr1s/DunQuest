@@ -1,5 +1,0 @@
-battle-axe
-healing_potion
-leg_plates
-SOMETHING
-battle-axe
