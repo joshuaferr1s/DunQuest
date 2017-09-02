@@ -68,20 +68,13 @@ def get_market_files(savename):
 		markets.append('saves/' + savename + '/' + _)
 	return markets
 
-def get_save_dirs():
-	dirs = os.listdir('saves/')
+def get_dirs(path):
+	dirs = os.listdir(path)
 	return dirs
 
-def get_save_files():
-	saves = os.listdir('saves')
-	save_files = list()
-	for _ in saves:
-		save_files.append(_.replace('.txt', ''))
-	return save_files
-
-def get_dungeon_files():
-	dungeons = os.listdir('dungeons/')
-	dungeons_files = list()
-	for _ in dungeons:
-		dungeons_files.append(_.replace('.txt', ''))
-	return dungeons_files
+def get_files(path):
+	raw_files = os.listdir(path)
+	files = list()
+	for _ in raw_files:
+		files.append(_.replace('.txt', ''))
+	return files

@@ -1035,16 +1035,16 @@ def update_save_files():
 	global save_dirs
 	global list_dungeons
 	try:
-		list_dungeons = get_dungeon_files()
+		list_dungeons = get_files('dungeons/')
 	except FileNotFoundError:
 		pass
 	try:
-		save_files_raw = get_save_files()
+		save_files_raw = get_files('saves/')
 		save_files = sort_save_files(save_files_raw)
 	except FileNotFoundError:
 		pass
 	try:
-		save_dirs_raw = get_save_dirs()
+		save_dirs_raw = get_dirs('saves/')
 		for _ in save_dirs_raw:
 			print(_)
 			if _ != '.DS_Store':
