@@ -629,16 +629,16 @@ class Dungeon():
 		global npc_merchant, npc_armorer, npc_blacksmith
 		if npc == 'merchant':
 			if self.current_pos not in self.visited:
-				npc_merchant.new('Merchant', ['healing_potion', 'artifact', 'purple_liquid'], {'healing_potion' : 4, 'artifact' : 7, 'purple_liquid' : 25}, {'healing_potion' : 2, 'artifact' : 5, 'purple_liquid' : 23})
+				npc_merchant.new('Merchant', 10, ['healing_potion', 'artifact', 'purple_liquid'], {'healing_potion' : 4, 'artifact' : 7, 'purple_liquid' : 25}, {'healing_potion' : 2, 'artifact' : 5, 'purple_liquid' : 23})
 			npc_merchant.interact()
 
 		elif npc == 'armorer':
 			if self.current_pos not in self.visited:
-				npc_armorer.new('Armorer', ['breastplate', 'gauntlets', 'leg_plates', 'helmet', 'boot'], {'breastplate' : 3, 'gauntlets' : 1, 'leg_plates' : 2, 'helmet' : 2, 'boot' : 1}, {'breastplate' : 1, 'gauntlets' : 1, 'leg_plates' : 1, 'helmet' : 1, 'boot' : 1})
+				npc_armorer.new('Armorer', 10, ['breastplate', 'gauntlets', 'leg_plates', 'helmet', 'boot'], {'breastplate' : 3, 'gauntlets' : 1, 'leg_plates' : 2, 'helmet' : 2, 'boot' : 1}, {'breastplate' : 1, 'gauntlets' : 1, 'leg_plates' : 1, 'helmet' : 1, 'boot' : 1})
 			npc_armorer.interact()
 		elif npc == 'blacksmith':
 			if self.current_pos not in self.visited:
-				npc_blacksmith.new('Blacksmith', ['battle-axe', 'dagger', 'sword', 'mace', 'bow', 'arrows'], {'battle-axe' : 10, 'dagger' : 5, 'sword' : 7, 'mace' : 8, 'bow' : 12, 'arrows' : 2, 'crossbow' : 18, 'spear' : 14}, {'battle-axe' : 8, 'dagger': 3, 'sword' : 5, 'mace' : 6, 'bow' : 10, 'arrows' : 1, 'crossbow' : 16, 'spear' : 12})
+				npc_blacksmith.new('Blacksmith', 10, ['battle-axe', 'dagger', 'sword', 'mace', 'bow', 'arrows'], {'battle-axe' : 10, 'dagger' : 5, 'sword' : 7, 'mace' : 8, 'bow' : 12, 'arrows' : 2, 'crossbow' : 18, 'spear' : 14}, {'battle-axe' : 8, 'dagger': 3, 'sword' : 5, 'mace' : 6, 'bow' : 10, 'arrows' : 1, 'crossbow' : 16, 'spear' : 12})
 			npc_blacksmith.interact()
 		else:
 			pass
@@ -796,16 +796,13 @@ class Dungeon():
 class Market():
 
 	def __init__(self, location):
-		global save_files
 		global savename
 		self.location = location
 		self.running = True
 		self.market = dict()
 		if ('saves/' + savename + '/' + self.location + '.txt') in get_market_files(savename):
 			self.market[self.location] = load_dungeon('saves/' + savename + '/' + self.location + '.txt')
-			print('Loaded Previous Market')
 		else:
-			print('Loaded Fresh Market')
 			self.market[self.location] = load_dungeon('markets/' + self.location + '.txt')
 
 	def market_description(self):
@@ -889,19 +886,9 @@ class Market():
 		self.market[self.location]['blacksmith']['trust'] = npc_blacksmith.trust
 		self.market[self.location]['blacksmith']['gold'] = npc_blacksmith.gold
 
-def sort_save_files(sfr):
+def remove_repeats(sfr):
 	sf = list()
-	sfre = list()
-	for i in sfr:
-		if 'dungeons' in i:
-			sfre.append(str(i).replace('dungeons', ''))
-		if 'equipped' in i:
-			sfre.append(str(i).replace('equipped', ''))
-		if 'inventory' in i:
-			sfre.append(str(i).replace('inventory', ''))
-		if 'player' in i:
-			sfre.append(str(i).replace('player', ''))
-	for k in sfre:
+	for k in sfr:
 		if k not in sf:
 			sf.append(k)
 	return sf
@@ -1039,16 +1026,11 @@ def update_save_files():
 	except FileNotFoundError:
 		pass
 	try:
-		save_files_raw = get_files('saves/')
-		save_files = sort_save_files(save_files_raw)
-	except FileNotFoundError:
-		pass
-	try:
 		save_dirs_raw = get_dirs('saves/')
 		for _ in save_dirs_raw:
-			print(_)
 			if _ != '.DS_Store':
 				save_dirs.append(_)
+		save_dirs = remove_repeats(save_dirs)
 	except FileNotFoundError:
 		pass
 
