@@ -79,6 +79,7 @@ class Npc():
 		self.met = False
 		self.trust = False
 		self.items = items
+		self.item_fre = dict()
 		self.items_buy = items_buy
 		self.items_sell = items_sell
 
@@ -133,17 +134,29 @@ class Npc():
 	def gui(self):
 		borderfy_text('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + ' || Gold: ' + str(pl.gold))
 
+	def inventory_updater(self):
+		displayed = list()
+		self.item_fre = dict()
+		for ite in pl.inventory:
+			if ite in self.item_fre:
+				self.item_fre[ite] += 1
+			else:
+				self.item_fre[ite] = 1
+		print('Inventory:')
+		for i in pl.inventory:
+			if i in pl.equipped and i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i + '(E)')
+				displayed.append(i)
+			elif i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i)
+				displayed.append(i)
+
 	def shop(self):
 		loop = True
 		while loop:
 			self.gui()
 			print('--------------------------------')
-			print('Inventory:')
-			for i in pl.inventory:
-				if i in pl.equipped:
-					print('* (E) ' + i)
-				else:
-					print('* ' + i)
+			self.inventory_updater()
 			print('--------------------------------')
 			print('Items:')
 			for i in self.items:
@@ -190,7 +203,7 @@ class Npc():
 			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.items:
 				if self.gold >= self.items_sell[choic[1]]:
 					if choic[1] in pl.inventory:
-						if choic[1] not in pl.equipped:
+						if choic[1] not in pl.equipped or self.item_fre[choic[1]] > 1:
 							print(self.name + ': Thanks for the ' + choic[1])
 							pl.gold += self.items_sell[choic[1]]
 							self.gold -= self.items_sell[choic[1]]
@@ -252,12 +265,7 @@ class Armorer(Npc):
 		while loop:
 			self.gui()
 			print('--------------------------------')
-			print('Inventory:')
-			for i in pl.inventory:
-				if i in pl.equipped:
-					print('* (E) ' + i)
-				else:
-					print('* ' + i)
+			self.inventory_updater()
 			print('--------------------------------')
 			print('Items:')
 			for i in self.items:
@@ -304,7 +312,7 @@ class Armorer(Npc):
 			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.items:
 				if self.gold >= self.items_sell[choic[1]]:
 					if choic[1] in pl.inventory:
-						if choic[1] not in pl.equipped:
+						if choic[1] not in pl.equipped or self.item_fre[choic[1]] > 1:
 							print(self.name + ': Thanks for the ' + choic[1])
 							pl.gold += self.items_sell[choic[1]]
 							self.gold -= self.items_sell[choic[1]]
@@ -343,12 +351,7 @@ class Blacksmith(Npc):
 		while loop:
 			self.gui()
 			print('--------------------------------')
-			print('Inventory:')
-			for i in pl.inventory:
-				if i in pl.equipped:
-					print('* (E) ' + i)
-				else:
-					print('* ' + i)
+			self.inventory_updater()
 			print('--------------------------------')
 			print('Items:')
 			for i in self.items:
@@ -395,7 +398,7 @@ class Blacksmith(Npc):
 			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.items:
 				if self.gold >= self.items_sell[choic[1]]:
 					if choic[1] in pl.inventory:
-						if choic[1] not in pl.equipped:
+						if choic[1] not in pl.equipped or self.item_fre[choic[1]] > 1:
 							print(self.name + ': Thanks for the ' + choic[1])
 							pl.gold += self.items_sell[choic[1]]
 							self.gold -= self.items_sell[choic[1]]
