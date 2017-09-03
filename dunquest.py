@@ -73,24 +73,12 @@ class Enemy():
 
 class Npc():
 
-	def __init__(self, name = 'npc', gold = 10, items = list(), items_buy = list(), items_sell = list()):
+	def __init__(self, name = 'npc', gold = 10):
 		self.name = name
 		self.gold = gold
 		self.met = False
 		self.trust = False
-		self.items = items
 		self.item_fre = dict()
-		self.items_buy = items_buy
-		self.items_sell = items_sell
-
-	def new(self, name, gold, items, items_buy, items_sell):
-		self.name = name
-		self.gold = gold
-		self.met = False
-		self.trust = False
-		self.items = items
-		self.items_buy = items_buy
-		self.items_sell = items_sell
 
 	def interact(self):
 		if not self.met:
@@ -103,6 +91,40 @@ class Npc():
 		self.met = True
 		print(self.name + ': Well howdy, young traveller!')
 		print(self.name + ": I seem to have lost my way but I ain't lost my wears.")
+
+	def gui(self):
+		borderfy_text('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + ' || Gold: ' + str(pl.gold))
+
+	def inventory_updater(self):
+		displayed = list()
+		self.item_fre = dict()
+		for ite in pl.inventory:
+			if ite in self.item_fre:
+				self.item_fre[ite] += 1
+			else:
+				self.item_fre[ite] = 1
+		print('Inventory:')
+		for i in pl.inventory:
+			if i in pl.equipped and i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i + '(E)')
+				displayed.append(i)
+			elif i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i)
+				displayed.append(i)
+
+class Merchant(Npc):
+
+	def __init__(self, name = 'Merchant', gold = 10, items = list(), items_buy = list(), items_sell = list()):
+		super().__init__(name, gold)
+		self.merchant = dict()
+
+	def new(self, name, gold):
+		global merchant
+		self.name = name
+		self.gold = gold
+		self.met = False
+		self.trust = False
+		self.merchant = merchant
 
 	def trust_test(self):
 		if not self.trust:
@@ -127,29 +149,9 @@ class Npc():
 
 	def set_prices(self):
 		if not self.trust:
-			for i in self.items:
-				self.items_buy[i] += 2
-				self.items_sell[i] -= 2
-
-	def gui(self):
-		borderfy_text('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + ' || Gold: ' + str(pl.gold))
-
-	def inventory_updater(self):
-		displayed = list()
-		self.item_fre = dict()
-		for ite in pl.inventory:
-			if ite in self.item_fre:
-				self.item_fre[ite] += 1
-			else:
-				self.item_fre[ite] = 1
-		print('Inventory:')
-		for i in pl.inventory:
-			if i in pl.equipped and i not in displayed:
-				print('* (' + str(self.item_fre[i]) + ') ' + i + '(E)')
-				displayed.append(i)
-			elif i not in displayed:
-				print('* (' + str(self.item_fre[i]) + ') ' + i)
-				displayed.append(i)
+			for i in self.merchant:
+				self.merchant[i]['buy'] += 2
+				self.merchant[i]['sell'] -= 2
 
 	def shop(self):
 		loop = True
@@ -159,8 +161,8 @@ class Npc():
 			self.inventory_updater()
 			print('--------------------------------')
 			print('Items:')
-			for i in self.items:
-				print('* ' + i + ' | ' + str(self.items_buy[i]) + ' | ' + str(self.items_sell[i]))
+			for i in self.merchant:
+				print('* ' + i + ' | ' + str(self.merchant[i]['buy']) + ' | ' + str(self.merchant[i]['sell']))
 			print('')
 			print('Actions:')
 			print('* buy ____')
@@ -187,11 +189,11 @@ class Npc():
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
-			elif chac != 'Failed' and choic[0] == 'buy' and choic[1] in self.items:
-				if pl.gold >= self.items_buy[choic[1]]:
+			elif chac != 'Failed' and choic[0] == 'buy' and choic[1] in self.merchant:
+				if pl.gold >= self.merchant[choic[1]]['buy']:
 					print(self.name + ': You are now the proud owner of ' + choic[1])
-					pl.gold -= self.items_buy[choic[1]]
-					self.gold += self.items_buy[choic[1]]
+					pl.gold -= self.merchant[choic[1]]['buy']
+					self.gold += self.merchant[choic[1]]['buy']
 					pl.inventory.append(choic[1])
 					try:
 						input("Press Enter to continue...")
@@ -200,13 +202,13 @@ class Npc():
 				else:
 					print(self.name + ': I apologize kind sir but you do not have the required funds.')
 
-			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.items:
-				if self.gold >= self.items_sell[choic[1]]:
+			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.merchant:
+				if self.gold >= self.merchant[choic[1]]['sell']:
 					if choic[1] in pl.inventory:
 						if choic[1] not in pl.equipped or self.item_fre[choic[1]] > 1:
 							print(self.name + ': Thanks for the ' + choic[1])
-							pl.gold += self.items_sell[choic[1]]
-							self.gold -= self.items_sell[choic[1]]
+							pl.gold += self.merchant[choic[1]]['sell']
+							self.gold -= self.merchant[choic[1]]['sell']
 							pl.inventory.remove(choic[1])
 							try:
 								input("Press Enter to continue...")
@@ -218,7 +220,7 @@ class Npc():
 						print(self.name + ': Are you trying to rob me child?! I know you do not have that!')
 				else:
 					print(self.name + ': I apologize kind sir but I do not have the required funds.')
-			elif chac != 'Failed' and (choic[0] == 'buy' or choic[0] == 'sell') and choic[1] not in self.items:
+			elif chac != 'Failed' and (choic[0] == 'buy' or choic[0] == 'sell') and choic[1] not in self.merchant:
 				print(self.name + ": Sorry partner, we don't deal with that here.")
 			else:
 				print('Invalid Input.')
@@ -227,15 +229,19 @@ class Npc():
 				except SyntaxError:
 					pass
 
-class Merchant(Npc):
-
-	def __init__(self, name = 'Merchant', gold = 10, items = list(), items_buy = list(), items_sell = list()):
-		super().__init__(name, gold, items, items_buy, items_sell)
-
 class Armorer(Npc):
 
 	def __init__(self, name = 'Armorer', gold = 10, items = list(), items_buy = list(), items_sell = list()):
-		super().__init__(name, gold, items, items_buy, items_sell)
+		super().__init__(name, gold)
+		self.armorer = dict()
+
+	def new(self, name, gold):
+		global armorer
+		self.name = name
+		self.gold = gold
+		self.met = False
+		self.trust = False
+		self.armorer = armorer
 
 	def introduction(self):
 		self.met = True
@@ -260,6 +266,12 @@ class Armorer(Npc):
 				else:
 					print('Invalid Input.')
 
+	def set_prices(self):
+		if not self.trust:
+			for i in self.armorer:
+				self.armorer[i]['buy'] += 2
+				self.armorer[i]['sell'] -= 2
+
 	def shop(self):
 		loop = True
 		while loop:
@@ -269,7 +281,7 @@ class Armorer(Npc):
 			print('--------------------------------')
 			print('Items:')
 			for i in self.items:
-				print('* ' + i + ' | ' + str(self.items_buy[i]) + ' | ' + str(self.items_sell[i]))
+				print('* ' + i + ' | ' + str(self.armorer[i]['buy']) + ' | ' + str(self.armorer[i]['sell']))
 			print('')
 			print('Actions:')
 			print('* buy ____')
@@ -296,11 +308,11 @@ class Armorer(Npc):
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
-			elif chac != 'Failed' and choic[0] == 'buy' and choic[1] in self.items:
-				if pl.gold >= self.items_buy[choic[1]]:
+			elif chac != 'Failed' and choic[0] == 'buy' and choic[1] in self.armorer:
+				if pl.gold >= self.armorer[choic[1]]['buy']:
 					print(self.name + ': Here is your ' + choic[1])
-					pl.gold -= self.items_buy[choic[1]]
-					self.gold += self.items_buy[choic[1]]
+					pl.gold -= self.armorer[choic[1]]['buy']
+					self.gold += self.armorer[choic[1]]['buy']
 					pl.inventory.append(choic[1])
 					try:
 						input("Press Enter to continue...")
@@ -309,13 +321,13 @@ class Armorer(Npc):
 				else:
 					print(self.name + ': Gonna pay me in buttons? Come back when you have the gold.')
 
-			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.items:
-				if self.gold >= self.items_sell[choic[1]]:
+			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.armorer:
+				if self.gold >= self.armorer[choic[1]]['sell']:
 					if choic[1] in pl.inventory:
 						if choic[1] not in pl.equipped or self.item_fre[choic[1]] > 1:
 							print(self.name + ': Thanks for the ' + choic[1])
-							pl.gold += self.items_sell[choic[1]]
-							self.gold -= self.items_sell[choic[1]]
+							pl.gold += self.armorer[choic[1]]['sell']
+							self.gold -= self.armorer[choic[1]]['sell']
 							pl.inventory.remove(choic[1])
 							try:
 								input("Press Enter to continue...")
@@ -327,7 +339,7 @@ class Armorer(Npc):
 						print(self.name + ': Are you trying to rob me?! I know you do not have that!')
 				else:
 					print(self.name + ": Ain't got the cash for that")
-			elif chac != 'Failed' and (choic[0] == 'buy' or choic[0] == 'sell') and choic[1] not in self.items:
+			elif chac != 'Failed' and (choic[0] == 'buy' or choic[0] == 'sell') and choic[1] not in self.armorer:
 				print(self.name + ": We don't deal with that here.")
 			else:
 				print('Invalid Input.')
@@ -339,12 +351,45 @@ class Armorer(Npc):
 class Blacksmith(Npc):
 
 	def __init__(self, name = 'Blacksmith', gold = 10, items = list(), items_buy = list(), items_sell = list()):
-		super().__init__(name, gold, items, items_buy, items_sell)
+		super().__init__(name, gold)
+		self.blacksmith = dict()
+
+	def new(self, name, gold):
+		global blacksmith
+		self.name = name
+		self.gold = gold
+		self.met = False
+		self.trust = False
+		self.blacksmith = blacksmith
 
 	def introduction(self):
 		self.met = True
 		print(self.name + ': Welcome to my establishment.')
 		print(self.name + ': Feel free to browse my stock.')
+
+	def set_prices(self):
+		if not self.trust:
+			for i in self.blacksmith:
+				self.blacksmith[i]['buy'] += 2
+				self.blacksmith[i]['sell'] -= 2
+
+	def trust_test(self):
+		if not self.trust:
+			loop = True
+			while loop:
+				print(self.name + ': To whom am I speaking?')
+				print('* tell_name')
+				print('* fake_name')
+				choi = input('> ')
+				if choi == 'tell_name':
+					self.trust = True
+					print(self.name + ': Well met, ' + pl.name)
+					loop = False
+				elif choi == 'fake_name':
+					print(self.name + ': So be it.')
+					loop = False
+				else:
+					print('Invalid Input.')
 
 	def shop(self):
 		loop = True
@@ -355,7 +400,7 @@ class Blacksmith(Npc):
 			print('--------------------------------')
 			print('Items:')
 			for i in self.items:
-				print('* ' + i + ' | ' + str(self.items_buy[i]) + ' | ' + str(self.items_sell[i]))
+				print('* ' + i + ' | ' + str(self.blacksmith[i]['buy']) + ' | ' + str(self.blacksmith[i]['sell']))
 			print('')
 			print('Actions:')
 			print('* buy ____')
@@ -382,11 +427,11 @@ class Blacksmith(Npc):
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
-			elif chac != 'Failed' and choic[0] == 'buy' and choic[1] in self.items:
-				if pl.gold >= self.items_buy[choic[1]]:
+			elif chac != 'Failed' and choic[0] == 'buy' and choic[1] in self.blacksmith:
+				if pl.gold >= self.blacksmith[choic[1]]['buy']:
 					print(self.name + ': Here is your ' + choic[1])
-					pl.gold -= self.items_buy[choic[1]]
-					self.gold += self.items_buy[choic[1]]
+					pl.gold -= self.blacksmith[choic[1]]['buy']
+					self.gold += self.blacksmith[choic[1]]['buy']
 					pl.inventory.append(choic[1])
 					try:
 						input("Press Enter to continue...")
@@ -395,13 +440,13 @@ class Blacksmith(Npc):
 				else:
 					print(self.name + ': Come back with some gold and then we can talk.')
 
-			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.items:
-				if self.gold >= self.items_sell[choic[1]]:
+			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.blacksmith:
+				if self.gold >= self.blacksmith[choic[1]]['sell']:
 					if choic[1] in pl.inventory:
 						if choic[1] not in pl.equipped or self.item_fre[choic[1]] > 1:
 							print(self.name + ': Thanks for the ' + choic[1])
-							pl.gold += self.items_sell[choic[1]]
-							self.gold -= self.items_sell[choic[1]]
+							pl.gold += self.blacksmith[choic[1]]['sell']
+							self.gold -= self.blacksmith[choic[1]]['sell']
 							pl.inventory.remove(choic[1])
 							try:
 								input("Press Enter to continue...")
@@ -413,7 +458,7 @@ class Blacksmith(Npc):
 						print(self.name + ": Don't take me for a fool child, I know you do not posses that.")
 				else:
 					print(self.name + ": I don't seem to have the funds for that.")
-			elif chac != 'Failed' and (choic[0] == 'buy' or choic[0] == 'sell') and choic[1] not in self.items:
+			elif chac != 'Failed' and (choic[0] == 'buy' or choic[0] == 'sell') and choic[1] not in self.blacksmith:
 				print(self.name + ": That is not one of our specialties.")
 			else:
 				print('Invalid Input.')
@@ -421,24 +466,6 @@ class Blacksmith(Npc):
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
-
-	def trust_test(self):
-		if not self.trust:
-			loop = True
-			while loop:
-				print(self.name + ': To whom am I speaking?')
-				print('* tell_name')
-				print('* fake_name')
-				choi = input('> ')
-				if choi == 'tell_name':
-					self.trust = True
-					print(self.name + ': Well met, ' + pl.name)
-					loop = False
-				elif choi == 'fake_name':
-					print(self.name + ': So be it.')
-					loop = False
-				else:
-					print('Invalid Input.')
 
 class Dungeon():
 
@@ -632,16 +659,16 @@ class Dungeon():
 		global npc_merchant, npc_armorer, npc_blacksmith
 		if npc == 'merchant':
 			if self.current_pos not in self.visited:
-				npc_merchant.new('Merchant', 10, ['healing_potion', 'artifact', 'purple_liquid'], {'healing_potion' : 4, 'artifact' : 7, 'purple_liquid' : 25}, {'healing_potion' : 2, 'artifact' : 5, 'purple_liquid' : 23})
+				npc_merchant.new('Merchant', 10)
 			npc_merchant.interact()
 
 		elif npc == 'armorer':
 			if self.current_pos not in self.visited:
-				npc_armorer.new('Armorer', 10, ['breastplate', 'gauntlets', 'leg_plates', 'helmet', 'boot'], {'breastplate' : 3, 'gauntlets' : 1, 'leg_plates' : 2, 'helmet' : 2, 'boot' : 1}, {'breastplate' : 1, 'gauntlets' : 1, 'leg_plates' : 1, 'helmet' : 1, 'boot' : 1})
+				npc_armorer.new('Armorer', 10)
 			npc_armorer.interact()
 		elif npc == 'blacksmith':
 			if self.current_pos not in self.visited:
-				npc_blacksmith.new('Blacksmith', 10, ['battle-axe', 'dagger', 'sword', 'mace', 'bow', 'arrows'], {'battle-axe' : 10, 'dagger' : 5, 'sword' : 7, 'mace' : 8, 'bow' : 12, 'arrows' : 2, 'crossbow' : 18, 'spear' : 14}, {'battle-axe' : 8, 'dagger': 3, 'sword' : 5, 'mace' : 6, 'bow' : 10, 'arrows' : 1, 'crossbow' : 16, 'spear' : 12})
+				npc_blacksmith.new('Blacksmith', 10)
 			npc_blacksmith.interact()
 		else:
 			pass
@@ -716,7 +743,7 @@ class Dungeon():
 				displayed.append(i)
 
 	def inventory_handler(self):
-		global weapons_mods, armor_mods, heal_effectors
+		global heal_effectors, armorer, blacksmith
 		state = True
 		while state:
 			scene_splitter()
@@ -736,13 +763,13 @@ class Dungeon():
 					if opts[1] not in pl.inventory:
 						print(opts[1] + ' is not in your inventory.')
 					elif opts[1] not in pl.equipped and opts[1] != '':
-						if opts[1] in armor_mods:
+						if opts[1] in armorer:
 							pl.equipped.append(opts[1])
-							pl.dp += armor_mods[opts[1]]
+							pl.dp += armoer[opts[1]]['mod']
 							print('You have now equipped a ' + opts[1])
-						elif opts[1] in weapons_mods:
+						elif opts[1] in blacksmith:
 							pl.equipped.append(opts[1])
-							pl.ap += weapons_mods[opts[1]]
+							pl.ap += blacksmith[opts[1]]['mod']
 							print('You are now wearing a ' + opts[1])
 						else:
 							print(opts[1] + ' is not equipable.')
@@ -755,13 +782,13 @@ class Dungeon():
 					if opts[1] not in pl.equipped:
 						print(opts[1] + ' is not equipped.')
 					elif opts[1] != '' and opts[1] in pl.equipped:
-						if opts[1] in armor_mods:
+						if opts[1] in armorer:
 							pl.equipped.remove(opts[1])
-							pl.dp -= armor_mods[opts[1]]
+							pl.dp -= armorer[opts[1]]['mod']
 							print('You have unequipped a ' + opts[1])
-						elif opts[1] in weapons_mods:
+						elif opts[1] in blacksmith:
 							pl.equipped.remove(opts[1])
-							pl.ap -= weapons_mods[opts[1]]
+							pl.ap -= blacksmith[opts[1]]['mod']
 							print('You are no longer wearing a ' + opts[1])
 						else:
 							print(opts[1] + ' is not equipable.')
@@ -841,7 +868,7 @@ class Market():
 			if choice == 'merchant':
 				if self.market[self.location]['merchant']['met'] == False:
 					self.market[self.location]['merchant']['met'] = True
-					npc_merchant.new('Merchant', self.market[self.location]['merchant']['gold'], ['healing_potion', 'artifact', 'purple_liquid'], {'healing_potion' : 4, 'artifact' : 7, 'purple_liquid' : 25}, {'healing_potion' : 2, 'artifact' : 5, 'purple_liquid' : 23})
+					npc_merchant.new('Merchant', self.market[self.location]['merchant']['gold'])
 				npc_merchant.met = self.market[self.location]['merchant']['met']
 				npc_merchant.trust = self.market[self.location]['merchant']['trust']
 				npc_merchant.interact()
@@ -851,7 +878,7 @@ class Market():
 			elif choice == 'armorer':
 				if self.market[self.location]['armorer']['met'] == False:
 					self.market[self.location]['armorer']['met'] = True
-					npc_armorer.new('Armorer', self.market[self.location]['armorer']['gold'],['breastplate', 'gauntlets', 'leg_plates', 'helmet', 'boot'], {'breastplate' : 3, 'gauntlets' : 1, 'leg_plates' : 2, 'helmet' : 2, 'boot' : 1}, {'breastplate' : 1, 'gauntlets' : 1, 'leg_plates' : 1, 'helmet' : 1, 'boot' : 1})
+					npc_armorer.new('Armorer', self.market[self.location]['armorer']['gold'])
 				npc_armorer.met = self.market[self.location]['armorer']['met']
 				npc_armorer.trust = self.market[self.location]['armorer']['trust']
 				npc_armorer.interact()
@@ -861,7 +888,7 @@ class Market():
 			elif choice == 'blacksmith':
 				if self.market[self.location]['blacksmith']['met'] == False:
 					self.market[self.location]['blacksmith']['met'] = True
-					npc_blacksmith.new('Blacksmith', self.market[self.location]['blacksmith']['gold'],['battle-axe', 'dagger', 'sword', 'mace', 'bow', 'arrows'], {'battle-axe' : 10, 'dagger' : 5, 'sword' : 7, 'mace' : 8, 'bow' : 12, 'arrows' : 2, 'crossbow' : 18, 'spear' : 14}, {'battle-axe' : 8, 'dagger': 3, 'sword' : 5, 'mace' : 6, 'bow' : 10, 'arrows' : 1, 'crossbow' : 16, 'spear' : 12})
+					npc_blacksmith.new('Blacksmith', self.market[self.location]['blacksmith']['gold'])
 				npc_blacksmith.met = self.market[self.location]['blacksmith']['met']
 				npc_blacksmith.trust = self.market[self.location]['blacksmith']['trust']
 				npc_blacksmith.interact()
@@ -1037,7 +1064,6 @@ def update_save_files():
 	except FileNotFoundError:
 		pass
 
-		
 ##### Game Initialization #####
 running = True
 pl = Player('Player')
@@ -1053,8 +1079,9 @@ market = dict()
 npc_merchant = Merchant()
 npc_armorer = Armorer()
 npc_blacksmith = Blacksmith()
-armor_mods = {'rusty_boots' : 1, 'rusty_pants': 1, 'rusty_breastplate' : 2, 'rusty_helmet' : 1, 'elven_boots' : 2, 'elven_pants': 2, 'elven_breastplate' : 3, 'elven_helmet' : 2, 'dwarven_boots' : 3, 'dwarven_pants': 3, 'dwarven_breastplate' : 4, 'dwarven_helmet' : 3, 'mithril_boots' : 10, 'mithril_pants': 10, 'mithril_breastplate' : 15, 'mithril_helmet' : 10}
-weapons_mods = {'rusty_dagger' : 1, 'dagger' : 2, 'sword' : 3, 'battle-axe' : 4, 'mace' : 5, 'bow' : 6}
+merchant = {'healing_potion' : {'buy' : 4, 'sell' : 2}, 'artifact' : {'buy' : 7, 'sell' : 5}, 'purple_liquid' : {'buy' : 25, 'sell' : 23}}
+armorer = {'leather_boots' : {'mod' : 1, 'buy' : 1, 'sell' : 1}, 'leather_pants' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'leather_breastplate' : {'mod' : 2, 'buy' : 3, 'sell' : 1}, 'leather_helmet' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'elven_boots' : {'mod' : 3, 'buy' : 5, 'sell' : 2}, 'elven_pants' : {'mod' : 3, 'buy' : 6, 'sell' : 3}, 'elven_breastplate' : {'mod' : 4, 'buy' : 7, 'sell' : 4}, 'elven_helmet' : {'mod' : 3, 'buy' : 5, 'sell' : 3}, 'dwarven_boots' : {'mod' : 6, 'buy' : 10, 'sell' : 8}, 'dwarven_pants' : {'mod' : 6, 'buy' : 11, 'sell' : 9}, 'dwarven_breastplate' : {'mod' : 7, 'buy' : 12, 'sell' : 10}, 'dwarven_helmet' : {'mod' : 6, 'buy' : 10, 'sell' : 8}}
+blacksmith = {'rusty_dagger' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'dagger' : {'mod' : 2, 'buy' : 5, 'sell' : 3}, 'sword' : {'mod' : 3, 'buy' : 7, 'sell' : 5}, 'battle-axe' : {'mod' : 4, 'buy' : 10, 'sell' : 8}, 'mace' : {'mod' : 5, 'buy' : 8, 'sell' : 6}, 'bow' : {'mod' : 6, 'buy' : 12, 'sell' : 10}, 'spear' : {'mod' : 7, 'buy' : 14, 'sell' : 12}, 'crossbow' : {'mod' : 8, 'buy' : 18, 'sell' : 16}}
 heal_effectors = {'healing_potion' : {'heal' : 5, 'desc' : 'You used a healing_potion.'}, 'purple_liquid' : {'heal' : 10000, 'desc' : 'You used a vial of purple_liquid.'}, 'nutella' : {'heal' : 8, 'desc' : 'You consumed a jar of nutella.'}}
 update_save_files()
 
