@@ -12,6 +12,7 @@ class Player():
 		self.dp = dp
 		self.inventory = items
 		self.equipped = []
+		self.item_fre = dict()
 
 	def take_dmg(self, dmg):
 		self.hp = self.hp - dmg
@@ -38,6 +39,104 @@ class Player():
 		else:
 			self.hp += heal_effectors[potion_type]['heal']
 		print(heal_effectors[potion_type]['desc'])
+
+	def inventory_updater(self):
+		displayed = list()
+		self.item_fre = dict()
+		for ite in self.inventory:
+			if ite in self.item_fre:
+				self.item_fre[ite] += 1
+			else:
+				self.item_fre[ite] = 1
+		print('Inventory:')
+		for i in self.inventory:
+			if i in self.equipped and i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i + '(E)')
+				displayed.append(i)
+			elif i not in displayed:
+				print('* (' + str(self.item_fre[i]) + ') ' + i)
+				displayed.append(i)
+
+	def inventory_handler(self):
+		global heal_effectors, armorer, blacksmith
+		state = True
+		while state:
+			scene_splitter()
+			self.gui()
+			self.inventory_updater()
+			print('----------------')
+			print('Options: ')
+			print('* equip _____')
+			print('* unequip _____')
+			print('* drop _____')
+			print('* use _____')
+			print('* back')
+			option = input('> ')
+			opts = option.split(' ')
+			if opts[0] == 'equip':
+				try:
+					if opts[1] not in self.inventory:
+						print(opts[1] + ' is not in your inventory.')
+					elif opts[1] not in self.equipped and opts[1] != '':
+						if opts[1] in armorer:
+							self.equipped.append(opts[1])
+							self.dp += armorer[opts[1]]['mod']
+							print('You have now equipped a ' + opts[1])
+						elif opts[1] in blacksmith:
+							self.equipped.append(opts[1])
+							self.ap += blacksmith[opts[1]]['mod']
+							print('You are now wearing a ' + opts[1])
+						else:
+							print(opts[1] + ' is not equipable.')
+					else:
+						print('You have already equipped this item.')
+				except IndexError:
+					print('Please enter what item you would like to equip after you type "equip".')
+			elif opts[0] == 'unequip':
+				try:
+					if opts[1] not in self.equipped:
+						print(opts[1] + ' is not equipped.')
+					elif opts[1] != '' and opts[1] in self.equipped:
+						if opts[1] in armorer:
+							self.equipped.remove(opts[1])
+							self.dp -= armorer[opts[1]]['mod']
+							print('You have unequipped a ' + opts[1])
+						elif opts[1] in blacksmith:
+							self.equipped.remove(opts[1])
+							self.ap -= blacksmith[opts[1]]['mod']
+							print('You are no longer wearing a ' + opts[1])
+						else:
+							print(opts[1] + ' is not equipable.')
+					else:
+						print('GAH')
+				except IndexError:
+					print('Please enter what item you would like to unequip after you type "unequip".')
+			elif opts[0] == 'drop':
+				try:
+					if opts[1] not in self.inventory:
+						print('You do not have this item.')
+					elif opts[1] in self.equipped and self.item_fre[opts[1]] == 1:
+						print('You must first unequip ' + opts[1])
+					else:
+						self.inventory.remove(opts[1])
+						print(opts[1] + ' has now been removed from your inventory.')
+				except IndexError:
+					print('Please enter what item you would like to drop after you type "drop".')
+			elif opts[0] == 'use':
+				try:
+					if opts[1] not in self.inventory:
+						print('You do not have this item.')
+					else:
+						if opts[1] in heal_effectors:
+							self.use_potion(opts[1])
+							self.inventory.remove(opts[1])
+							self.item_fre[opts[1]] -= 1
+				except IndexError:
+					print('Please enter what item you would like to use after you type "use".')
+			elif option == 'back':
+				state = False
+			else:
+				print('Invalid Input.')
 
 class Enemy():
 
@@ -95,23 +194,6 @@ class Npc():
 	def gui(self):
 		borderfy_text('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + ' || Gold: ' + str(pl.gold))
 
-	def inventory_updater(self):
-		displayed = list()
-		self.item_fre = dict()
-		for ite in pl.inventory:
-			if ite in self.item_fre:
-				self.item_fre[ite] += 1
-			else:
-				self.item_fre[ite] = 1
-		print('Inventory:')
-		for i in pl.inventory:
-			if i in pl.equipped and i not in displayed:
-				print('* (' + str(self.item_fre[i]) + ') ' + i + '(E)')
-				displayed.append(i)
-			elif i not in displayed:
-				print('* (' + str(self.item_fre[i]) + ') ' + i)
-				displayed.append(i)
-
 class Merchant(Npc):
 
 	def __init__(self, name = 'Merchant', gold = 10, items = list(), items_buy = list(), items_sell = list()):
@@ -158,7 +240,7 @@ class Merchant(Npc):
 		while loop:
 			self.gui()
 			print('--------------------------------')
-			self.inventory_updater()
+			pl.inventory_updater()
 			print('--------------------------------')
 			print('Items:')
 			for i in self.merchant:
@@ -167,6 +249,7 @@ class Merchant(Npc):
 			print('Actions:')
 			print('* buy ____')
 			print('* sell ____')
+			print('check inventory')
 			print('* help')
 			print('* leave')
 			choi = input('> ')
@@ -182,6 +265,8 @@ class Merchant(Npc):
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
+			elif choice == 'check inventory':
+				pl.inventory_handler()
 			elif choi == 'leave':
 				print(self.name + ': Farewell and good luck!')
 				loop = False
@@ -277,15 +362,16 @@ class Armorer(Npc):
 		while loop:
 			self.gui()
 			print('--------------------------------')
-			self.inventory_updater()
+			pl.inventory_updater()
 			print('--------------------------------')
 			print('Items:')
-			for i in self.items:
+			for i in self.armorer:
 				print('* ' + i + ' | ' + str(self.armorer[i]['buy']) + ' | ' + str(self.armorer[i]['sell']))
 			print('')
 			print('Actions:')
 			print('* buy ____')
 			print('* sell ____')
+			print('* check inventory')
 			print('* help')
 			print('* leave')
 			choi = input('> ')
@@ -301,6 +387,8 @@ class Armorer(Npc):
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
+			elif choice == 'check inventory':
+				pl.inventory_handler()
 			elif choi == 'leave':
 				print(self.name + ': Peace and quiet at last.')
 				loop = False
@@ -396,15 +484,16 @@ class Blacksmith(Npc):
 		while loop:
 			self.gui()
 			print('--------------------------------')
-			self.inventory_updater()
+			pl.inventory_updater()
 			print('--------------------------------')
 			print('Items:')
-			for i in self.items:
+			for i in self.blacksmith:
 				print('* ' + i + ' | ' + str(self.blacksmith[i]['buy']) + ' | ' + str(self.blacksmith[i]['sell']))
 			print('')
 			print('Actions:')
 			print('* buy ____')
 			print('* sell ____')
+			print('* check inventory')
 			print('* help')
 			print('* leave')
 			choi = input('> ')
@@ -420,6 +509,8 @@ class Blacksmith(Npc):
 					input("Press Enter to continue...")
 				except SyntaxError:
 					pass
+			elif choice == 'check inventory':
+				pl.inventory_handler()
 			elif choi == 'leave':
 				print(self.name + ': See you soon.')
 				loop = False
@@ -474,7 +565,6 @@ class Dungeon():
 		self.dungeon = load_dungeon('dungeons/' + dungeon + '.txt')
 		self.current_pos = start_pos
 		self.visited = list()
-		self.item_fre = dict()
 		self.rooms = dict()
 		for i in self.dungeon:
 			self.rooms[i] = self.dungeon[i]['name']
@@ -554,7 +644,7 @@ class Dungeon():
 		elif move in self.dungeon[self.current_pos]:
 			self.current_pos = self.dungeon[self.current_pos][move]
 		elif move == 'check inventory':
-			self.inventory_handler()
+			pl.inventory_handler()
 		elif move == 'talk to npc' and self.dungeon[self.current_pos]['npc'] != '':
 			scene_splitter()
 			self.npc_handler(self.dungeon[self.current_pos]['npc'])
@@ -585,7 +675,7 @@ class Dungeon():
 		print('Upon death you...')
 		print('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + '/' + str(pl.maxhp) + ' || + Gold: ' + str(pl.gold))
 		print('Room where you died: ' + self.dungeon[self.current_pos]['name'])
-		self.inventory_updater()
+		pl.inventory_updater()
 
 		try:
 			input("Press Enter to continue...")
@@ -604,7 +694,7 @@ class Dungeon():
 		print("                                                                                ")
 		print("Upon making it out...")
 		print('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + '/' + str(pl.maxhp) + ' || Gold: ' + str(pl.gold))
-		self.inventory_updater()
+		pl.inventory_updater()
 		try:
 			input("Press Enter to continue...")
 		except SyntaxError:
@@ -725,104 +815,6 @@ class Dungeon():
 		if self.dungeon[self.current_pos]['npc'] == '':
 			self.visited.append(self.current_pos)
 
-	def inventory_updater(self):
-		displayed = list()
-		self.item_fre = dict()
-		for ite in pl.inventory:
-			if ite in self.item_fre:
-				self.item_fre[ite] += 1
-			else:
-				self.item_fre[ite] = 1
-		print('Inventory:')
-		for i in pl.inventory:
-			if i in pl.equipped and i not in displayed:
-				print('* (' + str(self.item_fre[i]) + ') ' + i + '(E)')
-				displayed.append(i)
-			elif i not in displayed:
-				print('* (' + str(self.item_fre[i]) + ') ' + i)
-				displayed.append(i)
-
-	def inventory_handler(self):
-		global heal_effectors, armorer, blacksmith
-		state = True
-		while state:
-			scene_splitter()
-			self.gui()
-			self.inventory_updater()
-			print('----------------')
-			print('Options: ')
-			print('* equip _____')
-			print('* unequip _____')
-			print('* drop _____')
-			print('* use _____')
-			print('* back')
-			option = input('> ')
-			opts = option.split(' ')
-			if opts[0] == 'equip':
-				try:
-					if opts[1] not in pl.inventory:
-						print(opts[1] + ' is not in your inventory.')
-					elif opts[1] not in pl.equipped and opts[1] != '':
-						if opts[1] in armorer:
-							pl.equipped.append(opts[1])
-							pl.dp += armoer[opts[1]]['mod']
-							print('You have now equipped a ' + opts[1])
-						elif opts[1] in blacksmith:
-							pl.equipped.append(opts[1])
-							pl.ap += blacksmith[opts[1]]['mod']
-							print('You are now wearing a ' + opts[1])
-						else:
-							print(opts[1] + ' is not equipable.')
-					else:
-						print('You have already equipped this item.')
-				except IndexError:
-					print('Please enter what item you would like to equip after you type "equip".')
-			elif opts[0] == 'unequip':
-				try:
-					if opts[1] not in pl.equipped:
-						print(opts[1] + ' is not equipped.')
-					elif opts[1] != '' and opts[1] in pl.equipped:
-						if opts[1] in armorer:
-							pl.equipped.remove(opts[1])
-							pl.dp -= armorer[opts[1]]['mod']
-							print('You have unequipped a ' + opts[1])
-						elif opts[1] in blacksmith:
-							pl.equipped.remove(opts[1])
-							pl.ap -= blacksmith[opts[1]]['mod']
-							print('You are no longer wearing a ' + opts[1])
-						else:
-							print(opts[1] + ' is not equipable.')
-					else:
-						print('GAH')
-				except IndexError:
-					print('Please enter what item you would like to unequip after you type "unequip".')
-			elif opts[0] == 'drop':
-				try:
-					if opts[1] not in pl.inventory:
-						print('You do not have this item.')
-					elif opts[1] in pl.equipped and self.item_fre[opts[1]] == 1:
-						print('You must first unequip ' + opts[1])
-					else:
-						pl.inventory.remove(opts[1])
-						print(opts[1] + ' has now been removed from your inventory.')
-				except IndexError:
-					print('Please enter what item you would like to drop after you type "drop".')
-			elif opts[0] == 'use':
-				try:
-					if opts[1] not in pl.inventory:
-						print('You do not have this item.')
-					else:
-						if opts[1] in heal_effectors:
-							pl.use_potion(opts[1])
-							pl.inventory.remove(opts[1])
-							self.item_fre[opts[1]] -= 1
-				except IndexError:
-					print('Please enter what item you would like to use after you type "use".')
-			elif option == 'back':
-				state = False
-			else:
-				print('Invalid Input.')
-
 class Market():
 
 	def __init__(self, location):
@@ -863,6 +855,7 @@ class Market():
 			print('* merchant')
 			print('* armorer')
 			print('* blacksmith')
+			print('* check inventory')
 			print('* leave')
 			choice = input('> ')
 			if choice == 'merchant':
@@ -895,6 +888,8 @@ class Market():
 				self.market[self.location]['blacksmith']['met'] = npc_blacksmith.met
 				self.market[self.location]['blacksmith']['trust'] = npc_blacksmith.trust
 				self.market[self.location]['blacksmith']['gold'] = npc_blacksmith.gold
+			elif choice == 'check inventory':
+				pl.inventory_handler()
 			elif choice == 'leave':
 				self.running = False
 			else:
@@ -1080,7 +1075,7 @@ npc_merchant = Merchant()
 npc_armorer = Armorer()
 npc_blacksmith = Blacksmith()
 merchant = {'healing_potion' : {'buy' : 4, 'sell' : 2}, 'artifact' : {'buy' : 7, 'sell' : 5}, 'purple_liquid' : {'buy' : 25, 'sell' : 23}}
-armorer = {'leather_boots' : {'mod' : 1, 'buy' : 1, 'sell' : 1}, 'leather_pants' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'leather_breastplate' : {'mod' : 2, 'buy' : 3, 'sell' : 1}, 'leather_helmet' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'elven_boots' : {'mod' : 3, 'buy' : 5, 'sell' : 2}, 'elven_pants' : {'mod' : 3, 'buy' : 6, 'sell' : 3}, 'elven_breastplate' : {'mod' : 4, 'buy' : 7, 'sell' : 4}, 'elven_helmet' : {'mod' : 3, 'buy' : 5, 'sell' : 3}, 'dwarven_boots' : {'mod' : 6, 'buy' : 10, 'sell' : 8}, 'dwarven_pants' : {'mod' : 6, 'buy' : 11, 'sell' : 9}, 'dwarven_breastplate' : {'mod' : 7, 'buy' : 12, 'sell' : 10}, 'dwarven_helmet' : {'mod' : 6, 'buy' : 10, 'sell' : 8}}
+armorer = {'leather_boots' : {'mod' : 1, 'buy' : 1, 'sell' : 1}, 'leather_pants' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'leather_breastplate' : {'mod' : 2, 'buy' : 3, 'sell' : 1}, 'leather_helmet' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'elven_boots' : {'mod' : 3, 'buy' : 5, 'sell' : 2}, 'elven_pants' : {'mod' : 3, 'buy' : 6, 'sell' : 3}, 'elven_breastplate' : {'mod' : 4, 'buy' : 7, 'sell' : 4}, 'elven_helmet' : {'mod' : 3, 'buy' : 5, 'sell' : 3}, 'mithril_boots' : {'mod' : 6, 'buy' : 10, 'sell' : 8}, 'mithril_pants' : {'mod' : 6, 'buy' : 11, 'sell' : 9}, 'mithril_breastplate' : {'mod' : 7, 'buy' : 12, 'sell' : 10}, 'mithril_helmet' : {'mod' : 6, 'buy' : 10, 'sell' : 8}}
 blacksmith = {'rusty_dagger' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'dagger' : {'mod' : 2, 'buy' : 5, 'sell' : 3}, 'sword' : {'mod' : 3, 'buy' : 7, 'sell' : 5}, 'battle-axe' : {'mod' : 4, 'buy' : 10, 'sell' : 8}, 'mace' : {'mod' : 5, 'buy' : 8, 'sell' : 6}, 'bow' : {'mod' : 6, 'buy' : 12, 'sell' : 10}, 'spear' : {'mod' : 7, 'buy' : 14, 'sell' : 12}, 'crossbow' : {'mod' : 8, 'buy' : 18, 'sell' : 16}}
 heal_effectors = {'healing_potion' : {'heal' : 5, 'desc' : 'You used a healing_potion.'}, 'purple_liquid' : {'heal' : 10000, 'desc' : 'You used a vial of purple_liquid.'}, 'nutella' : {'heal' : 8, 'desc' : 'You consumed a jar of nutella.'}}
 update_save_files()

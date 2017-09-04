@@ -1,1 +1,1 @@
-{'name' : 'Azerath', 'visited' : False, 'desc' : 'BLAH', 'blacksmith' : {'met' : False, 'trust' : False, 'gold' : 15}, 'armorer' : {'met' : False, 'trust' : False, 'gold' : 15}, 'merchant' : {'met' : False, 'trust' : False, 'gold' : 15}}
+{'name' : 'Azerath', 'visited' : False, 'desc' : 'BLAH', 'blacksmith' : {'met' : False, 'trust' : False, 'gold' : 10}, 'armorer' : {'met' : False, 'trust' : False, 'gold' : 10}, 'merchant' : {'met' : False, 'trust' : False, 'gold' : 10}}
