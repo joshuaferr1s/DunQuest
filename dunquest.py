@@ -40,6 +40,9 @@ class Player():
 			self.hp += heal_effectors[potion_type]['heal']
 		print(heal_effectors[potion_type]['desc'])
 
+	def gui(self):
+		borderfy_text('Name: ' + self.name + ' || HP: ' + str(self.hp) + ' || Gold: ' + str(self.gold))
+
 	def inventory_updater(self):
 		displayed = list()
 		self.item_fre = dict()
@@ -100,11 +103,11 @@ class Player():
 						if opts[1] in armorer:
 							self.equipped.remove(opts[1])
 							self.dp -= armorer[opts[1]]['mod']
-							print('You have unequipped a ' + opts[1])
+							print('You are no longer wearing a ' + opts[1])
 						elif opts[1] in blacksmith:
 							self.equipped.remove(opts[1])
 							self.ap -= blacksmith[opts[1]]['mod']
-							print('You are no longer wearing a ' + opts[1])
+							print('You are no longer using a ' + opts[1])
 						else:
 							print(opts[1] + ' is not equipable.')
 					else:
@@ -249,7 +252,7 @@ class Merchant(Npc):
 			print('Actions:')
 			print('* buy ____')
 			print('* sell ____')
-			print('check inventory')
+			print('* check inventory')
 			print('* help')
 			print('* leave')
 			choi = input('> ')
@@ -626,7 +629,7 @@ class Dungeon():
 	def get_moves(self):
 		print('You can go:')
 		for i in self.dungeon[self.current_pos]:
-			if i == 'name' or i == 'desc' or i == 'description' or i == 'loot' or i == 'enemy' or i == 'enemy_cr' or i == 'npc' or i == 'gold':
+			if i == 'name' or i == 'desc' or i == 'description' or i == 'loot' or i == 'enemy' or i == 'enemy_cr' or i == 'npc' or i == 'gold' or i == 'market':
 				pass
 			else:
 				print(' * ' + i)
@@ -851,14 +854,14 @@ class Market():
 			self.market_description()
 		while self.running == True:
 			self.gui()
-			print('Where would you like to go?')
-			print('* merchant')
-			print('* armorer')
-			print('* blacksmith')
+			print('What would you like to do?')
+			print('* visit merchant')
+			print('* visit armorer')
+			print('* visit blacksmith')
 			print('* check inventory')
 			print('* leave')
 			choice = input('> ')
-			if choice == 'merchant':
+			if choice == 'visit merchant':
 				if self.market[self.location]['merchant']['met'] == False:
 					self.market[self.location]['merchant']['met'] = True
 					npc_merchant.new('Merchant', self.market[self.location]['merchant']['gold'])
@@ -868,7 +871,7 @@ class Market():
 				self.market[self.location]['merchant']['met'] = npc_merchant.met
 				self.market[self.location]['merchant']['trust'] = npc_merchant.trust
 				self.market[self.location]['merchant']['gold'] = npc_merchant.gold
-			elif choice == 'armorer':
+			elif choice == 'visit armorer':
 				if self.market[self.location]['armorer']['met'] == False:
 					self.market[self.location]['armorer']['met'] = True
 					npc_armorer.new('Armorer', self.market[self.location]['armorer']['gold'])
@@ -878,7 +881,7 @@ class Market():
 				self.market[self.location]['armorer']['met'] = npc_armorer.met
 				self.market[self.location]['armorer']['trust'] = npc_armorer.trust
 				self.market[self.location]['armorer']['gold'] = npc_armorer.gold
-			elif choice == 'blacksmith':
+			elif choice == 'visit blacksmith':
 				if self.market[self.location]['blacksmith']['met'] == False:
 					self.market[self.location]['blacksmith']['met'] = True
 					npc_blacksmith.new('Blacksmith', self.market[self.location]['blacksmith']['gold'])
