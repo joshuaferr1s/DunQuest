@@ -168,7 +168,7 @@ class Enemy():
 		return self.loot[self.cr][randchoice]
 
 	def drop_gold(self):
-		return random.randint(0, math.floor(self.maxhp/3)) + self.cr
+		return random.randint(0, self.cr)
 
 	def gui(self):
 		borderfy_text('Name: ' + self.name + ' || HP: ' + str(self.hp))
