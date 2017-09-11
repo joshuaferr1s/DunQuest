@@ -195,6 +195,7 @@ class Npc():
 		print(self.name + ": I seem to have lost my way but I ain't lost my wears.")
 
 	def gui(self):
+		global pl
 		borderfy_text('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + ' || Gold: ' + str(pl.gold))
 
 class Merchant(Npc):
@@ -239,11 +240,13 @@ class Merchant(Npc):
 				self.merchant[i]['sell'] -= 2
 
 	def shop(self):
+		global pl
 		loop = True
 		while loop:
 			self.gui()
 			print('--------------------------------')
 			pl.inventory_updater()
+			self.item_fre = pl.item_fre
 			print('--------------------------------')
 			print('Items:')
 			for i in self.merchant:
@@ -361,11 +364,13 @@ class Armorer(Npc):
 				self.armorer[i]['sell'] -= 2
 
 	def shop(self):
+		global pl
 		loop = True
 		while loop:
 			self.gui()
 			print('--------------------------------')
 			pl.inventory_updater()
+			self.item_fre = pl.item_fre
 			print('--------------------------------')
 			print('Items:')
 			for i in self.armorer:
@@ -483,11 +488,13 @@ class Blacksmith(Npc):
 					print('Invalid Input.')
 
 	def shop(self):
+		global pl
 		loop = True
 		while loop:
 			self.gui()
 			print('--------------------------------')
 			pl.inventory_updater()
+			self.item_fre = pl.item_fre
 			print('--------------------------------')
 			print('Items:')
 			for i in self.blacksmith:
@@ -535,9 +542,12 @@ class Blacksmith(Npc):
 					print(self.name + ': Come back with some gold and then we can talk.')
 
 			elif chac != 'Failed' and choic[0] == 'sell' and choic[1] in self.blacksmith:
+				print('made it to sell')
 				if self.gold >= self.blacksmith[choic[1]]['sell']:
+					print('gold checked')
 					if choic[1] in pl.inventory:
-						if choic[1] not in pl.equipped or self.item_fre[choic[1]] > 1:
+						print('is in inventory')
+						if (choic[1] not in pl.equipped) or (self.item_fre[choic[1]] > 1):
 							print(self.name + ': Thanks for the ' + choic[1])
 							pl.gold += self.blacksmith[choic[1]]['sell']
 							self.gold -= self.blacksmith[choic[1]]['sell']
