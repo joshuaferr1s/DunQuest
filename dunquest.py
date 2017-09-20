@@ -575,7 +575,7 @@ class Dungeon():
 
 	def __init__(self, dungeon = 'dungeon1', start_pos = "1"):
 		self.cur_dungeon = dungeon
-		self.dungeon = load_dungeon('dungeons/' + dungeon + '.json')
+		self.dungeon = dungeons_dict[dungeon]
 		self.current_pos = start_pos
 		self.visited = list()
 		self.rooms = dict()
@@ -1058,11 +1058,6 @@ def update_save_files():
 	global save_files
 	global savename
 	global save_dirs
-	global list_dungeons
-	try:
-		list_dungeons = get_files('dungeons/')
-	except FileNotFoundError:
-		pass
 	try:
 		save_dirs_raw = get_dirs('saves/')
 		for _ in save_dirs_raw:
@@ -1082,7 +1077,6 @@ player = list()
 savename = ''
 save_dirs = list()
 save_files = list()
-list_dungeons = list()
 market = dict()
 npc_merchant = Merchant()
 npc_armorer = Armorer()
@@ -1091,6 +1085,7 @@ merchant = {'healing_potion' : {'buy' : 4, 'sell' : 2}, 'artifact' : {'buy' : 7,
 armorer = {'leather_boots' : {'mod' : 1, 'buy' : 1, 'sell' : 1}, 'leather_pants' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'leather_breastplate' : {'mod' : 2, 'buy' : 3, 'sell' : 1}, 'leather_helmet' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'elven_boots' : {'mod' : 3, 'buy' : 5, 'sell' : 2}, 'elven_pants' : {'mod' : 3, 'buy' : 6, 'sell' : 3}, 'elven_breastplate' : {'mod' : 4, 'buy' : 7, 'sell' : 4}, 'elven_helmet' : {'mod' : 3, 'buy' : 5, 'sell' : 3}, 'mithril_boots' : {'mod' : 6, 'buy' : 10, 'sell' : 8}, 'mithril_pants' : {'mod' : 6, 'buy' : 11, 'sell' : 9}, 'mithril_breastplate' : {'mod' : 7, 'buy' : 12, 'sell' : 10}, 'mithril_helmet' : {'mod' : 6, 'buy' : 10, 'sell' : 8}}
 blacksmith = {'rusty_dagger' : {'mod' : 1, 'buy' : 2, 'sell' : 1}, 'dagger' : {'mod' : 2, 'buy' : 5, 'sell' : 3}, 'sword' : {'mod' : 3, 'buy' : 7, 'sell' : 5}, 'battle-axe' : {'mod' : 4, 'buy' : 10, 'sell' : 8}, 'mace' : {'mod' : 5, 'buy' : 8, 'sell' : 6}, 'bow' : {'mod' : 6, 'buy' : 12, 'sell' : 10}, 'spear' : {'mod' : 7, 'buy' : 14, 'sell' : 12}, 'crossbow' : {'mod' : 8, 'buy' : 18, 'sell' : 16}}
 heal_effectors = {'healing_potion' : {'heal' : 5, 'desc' : 'You used a healing_potion.'}, 'purple_liquid' : {'heal' : 10000, 'desc' : 'You used a vial of purple_liquid.'}, 'nutella' : {'heal' : 8, 'desc' : 'You consumed a jar of nutella.'}}
+dungeons_dict = load_dungeon('dungeons/dungeons.json')
 update_save_files()
 
 # Main loop
@@ -1136,7 +1131,7 @@ while running:
 		menu_state = True
 		while menu_state:
 			able_dungeons = list()
-			for i in list_dungeons:
+			for i in dungeons_dict:
 				if i not in dungeons_comp:
 					able_dungeons.append(i)
 			if len(able_dungeons) > 0:
