@@ -573,9 +573,9 @@ class Blacksmith(Npc):
 
 class Dungeon():
 
-	def __init__(self, dungeon = 'dungeon1', start_pos = 1):
-		self.cur_dungeon = dungeon.split('dungeon')[1]
-		self.dungeon = load_dungeon('dungeons/' + dungeon + '.txt')
+	def __init__(self, dungeon = 'dungeon1', start_pos = "1"):
+		self.cur_dungeon = dungeon
+		self.dungeon = load_dungeon('dungeons/' + dungeon + '.json')
 		self.current_pos = start_pos
 		self.visited = list()
 		self.rooms = dict()
@@ -937,7 +937,7 @@ def update_pot_files(current_dun):
 	global inventory
 	global player
 	if str(current_dun) not in dungeons_comp:
-		dungeons_comp.append('dungeon' + str(current_dun))
+		dungeons_comp.append(current_dun)
 	for i in pl.equipped:
 		equipped.append(i)
 	for i in pl.inventory:
@@ -1146,7 +1146,7 @@ while running:
 					print('* ' + i)
 				print('Which dungeon would you like to play?')
 				choice = input('> ')
-				if choice in list_dungeons and choice in able_dungeons:
+				if choice in able_dungeons:
 					menu_state = False
 					print('\n'*100)
 					if len(dungeons_comp) < 1 and pl.name == 'Player':

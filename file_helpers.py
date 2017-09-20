@@ -1,9 +1,9 @@
-import os
+import os, json
 
 def load_dungeon(file_name):
 	dict_from_file = {}
 	with open(file_name,'r') as inf:
-		dict_from_file = eval(inf.read())
+		dict_from_file = json.load(inf)
 	return dict_from_file
 
 def borderfy_text(text):
@@ -75,6 +75,10 @@ def get_dirs(path):
 def get_files(path):
 	raw_files = os.listdir(path)
 	files = list()
+	result = list()
 	for _ in raw_files:
 		files.append(_.replace('.txt', ''))
-	return files
+	for _ in files:
+		result.append(_.replace('.json', ''))
+	result.remove('.DS_Store')
+	return result
