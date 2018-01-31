@@ -242,7 +242,20 @@ class Merchant(Npc):
                  items_buy=list(),
                  items_sell=list()):
         super().__init__(name, gold)
-        self.merchant = {'healing_potion': {'buy': 4, 'sell': 2}, 'artifact': {'buy': 7, 'sell': 5}, 'purple_liquid': {'buy': 25, 'sell': 23}}
+        self.merchant = {
+            'healing_potion': {
+                'buy': 4,
+                'sell': 2
+            },
+            'artifact': {
+                'buy': 7,
+                'sell': 5
+            },
+            'purple_liquid': {
+                'buy': 25,
+                'sell': 23
+            }
+        }
 
     def new(self, name, gold):
         self.name = name
@@ -383,7 +396,68 @@ class Armorer(Npc):
                  items_buy=list(),
                  items_sell=list()):
         super().__init__(name, gold)
-        self.armorer = armorer = {'leather_boots': {'mod': 1,'buy': 1,'sell': 1},'leather_pants': {'mod': 1,'buy': 2,'sell': 1},'leather_breastplate': {'mod': 2,'buy': 3,'sell': 1},'leather_helmet': {'mod': 1,'buy': 2,'sell': 1},'elven_boots': {'mod': 3,'buy': 5,'sell': 2},'elven_pants': {'mod': 3,'buy': 6,'sell': 3},'elven_breastplate': {'mod': 4,'buy': 7,'sell': 4},'elven_helmet': {'mod': 3,'buy': 5,'sell': 3},'mithril_boots': {'mod': 6,'buy': 10,'sell': 8},'mithril_pants': {'mod': 6,'buy': 11,'sell': 9},'mithril_breastplate': {'mod': 7,'buy': 12,'sell': 10},'mithril_helmet': {'mod': 6,'buy': 10,'sell': 8}}
+        self.armorer = armorer = {
+            'leather_boots': {
+                'mod': 1,
+                'buy': 1,
+                'sell': 1
+            },
+            'leather_pants': {
+                'mod': 1,
+                'buy': 2,
+                'sell': 1
+            },
+            'leather_breastplate': {
+                'mod': 2,
+                'buy': 3,
+                'sell': 1
+            },
+            'leather_helmet': {
+                'mod': 1,
+                'buy': 2,
+                'sell': 1
+            },
+            'elven_boots': {
+                'mod': 3,
+                'buy': 5,
+                'sell': 2
+            },
+            'elven_pants': {
+                'mod': 3,
+                'buy': 6,
+                'sell': 3
+            },
+            'elven_breastplate': {
+                'mod': 4,
+                'buy': 7,
+                'sell': 4
+            },
+            'elven_helmet': {
+                'mod': 3,
+                'buy': 5,
+                'sell': 3
+            },
+            'mithril_boots': {
+                'mod': 6,
+                'buy': 10,
+                'sell': 8
+            },
+            'mithril_pants': {
+                'mod': 6,
+                'buy': 11,
+                'sell': 9
+            },
+            'mithril_breastplate': {
+                'mod': 7,
+                'buy': 12,
+                'sell': 10
+            },
+            'mithril_helmet': {
+                'mod': 6,
+                'buy': 10,
+                'sell': 8
+            }
+        }
 
     def new(self, name, gold):
         self.name = name
@@ -518,7 +592,48 @@ class Blacksmith(Npc):
                  items_buy=list(),
                  items_sell=list()):
         super().__init__(name, gold)
-        self.blacksmith = blacksmith = {'rusty_dagger': {'mod': 1,'buy': 2,'sell': 1},'dagger': {'mod': 2,'buy': 5,'sell': 3},'sword': {'mod': 3,'buy': 7,'sell': 5},'battle-axe': {'mod': 4,'buy': 10,'sell': 8},'mace': {'mod': 5,'buy': 8,'sell': 6},'bow': {'mod': 6,'buy': 12,'sell': 10},'spear': {'mod': 7,'buy': 14,'sell': 12},'crossbow': {'mod': 8,'buy': 18,'sell': 16}}
+        self.blacksmith = blacksmith = {
+            'rusty_dagger': {
+                'mod': 1,
+                'buy': 2,
+                'sell': 1
+            },
+            'dagger': {
+                'mod': 2,
+                'buy': 5,
+                'sell': 3
+            },
+            'sword': {
+                'mod': 3,
+                'buy': 7,
+                'sell': 5
+            },
+            'battle-axe': {
+                'mod': 4,
+                'buy': 10,
+                'sell': 8
+            },
+            'mace': {
+                'mod': 5,
+                'buy': 8,
+                'sell': 6
+            },
+            'bow': {
+                'mod': 6,
+                'buy': 12,
+                'sell': 10
+            },
+            'spear': {
+                'mod': 7,
+                'buy': 14,
+                'sell': 12
+            },
+            'crossbow': {
+                'mod': 8,
+                'buy': 18,
+                'sell': 16
+            }
+        }
 
     def new(self, name, gold):
         self.name = name
@@ -921,7 +1036,8 @@ class Market():
         if savename not in save_states:
             self.market[self.location] = markets[self.location]
         elif savename in save_states and self.location in save_states[savename]["market_data"]:
-            self.market[self.location] = save_states[savename]["market_data"][self.location]
+            self.market[self.location] = save_states[savename]["market_data"][
+                self.location]
         else:
             self.market[self.location] = markets[self.location]
 
@@ -1051,9 +1167,9 @@ def wfunc():
         pass
 
 
-def update_pot_files(current_dun): #UPDATED
+def update_pot_files(current_dun):  #UPDATED
     global player_data, dungeon_data
-    
+
     if current_dun not in dungeon_data:
         dungeon_data.append(current_dun)
         dungeons_comp.append(current_dun)
@@ -1068,7 +1184,7 @@ def update_pot_files(current_dun): #UPDATED
     player_data["equipped"] = pl.equipped
 
 
-def save_game(): #UPDATED
+def save_game():  #UPDATED
     global savename, save_states, player_data, dungeon_data, market_data
     if not os.path.isfile("Resources/saves.json"):
         write_file("Resources/saves.json", "")
@@ -1083,7 +1199,7 @@ def save_game(): #UPDATED
     write_dict_data("Resources/saves.json", save_states)
 
 
-def save_progress(): #UPDATED
+def save_progress():  #UPDATED
     global savename, save_names
     get_save_data()
     menu_state = True
@@ -1125,7 +1241,7 @@ def save_progress(): #UPDATED
             scene_splitter()
 
 
-def load_game(): #UPDATED
+def load_game():  #UPDATED
     global dungeons_comp, savename, save_states, market_data
 
     dungeons_comp = save_states[savename]["dungeon_data"]
@@ -1144,7 +1260,7 @@ def load_game(): #UPDATED
     wfunc()
 
 
-def get_save_data(): #UPDATED
+def get_save_data():  #UPDATED
     global save_states, save_names
     try:
         save_states = load_dungeon('Resources/saves.json')
@@ -1386,4 +1502,3 @@ while running:
     else:
         print('Invalid Input.')
         wfunc()
-

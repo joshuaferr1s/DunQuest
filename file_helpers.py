@@ -7,6 +7,7 @@ def load_dungeon(file_name):
         dict_from_file = json.load(inf)
     return dict_from_file
 
+
 def write_dict_data(path, data):
     with open(path, 'w') as f:
         json.dump(data, f, indent=4)
