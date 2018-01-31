@@ -90,10 +90,10 @@
         "dungeon_data": []
     },
     "Ren": {
-        "player_data": {"name" : "Rowan Tk'err", "gold" : 10022, "maxhp" : 100, "hp": 98, "ap": 26, "dp": 29, "inventory":["healing_potion","leg_plates","SOMETHING","healing_potion","battle-axe","healing_potion","leg_plates","SOMETHING","battle-axe","healing_potion","nutella","purple_liquid","purple_liquid","healing_potion","healing_potion","crossbow","mithril_boots","mithril_pants","mithril_breastplate","mithril_helmet","healing_potion","leg_plates","SOMETHING","healing_potion","healing_potion","leg_plates","SOMETHING","battle-axe","healing_potion","nutella","purple_liquid","purple_liquid","healing_potion","healing_potion","crossbow","mithril_boots","mithril_pants","mithril_breastplate","mithril_helmet","leather_pants","nutella"],"equipped":["battle-axe","mithril_helmet","mithril_pants","mithril_breastplate","mithril_boots"]},
+        "player_data": {"name" : "Rowan Tkerr", "gold" : 10022, "maxhp" : 100, "hp": 98, "ap": 26, "dp": 29, "inventory":["healing_potion","leg_plates","SOMETHING","healing_potion","battle-axe","healing_potion","leg_plates","SOMETHING","battle-axe","healing_potion","nutella","purple_liquid","purple_liquid","healing_potion","healing_potion","crossbow","mithril_boots","mithril_pants","mithril_breastplate","mithril_helmet","healing_potion","leg_plates","SOMETHING","healing_potion","healing_potion","leg_plates","SOMETHING","battle-axe","healing_potion","nutella","purple_liquid","purple_liquid","healing_potion","healing_potion","crossbow","mithril_boots","mithril_pants","mithril_breastplate","mithril_helmet","leather_pants","nutella"],"equipped":["battle-axe","mithril_helmet","mithril_pants","mithril_breastplate","mithril_boots"]},
         "market_data": {
             "azerath" : {"name": "Azerath", "visited": true, "desc": "BLAH", "blacksmith": {"met": true, "trust": true, "gold": 11}, "armorer": {"met": true, "trust": true, "gold": 50}, "merchant": {"met": true, "trust": true, "gold": 10}},
-            "coroda" : {"name": "Coroda", "visited": true, "desc": "BLAHhhhh", "blacksmith": {"met": true, "trust": true, "gold": 7}, "armorer": {"met": true, "trust": true, "gold": 15}, "merchant": {"met": true, "trust": true, "gold": 10}},
+            "coroda" : {"name": "Coroda", "visited": true, "desc": "BLAHhhhh", "blacksmith": {"met": true, "trust": true, "gold": 7}, "armorer": {"met": true, "trust": true, "gold": 15}, "merchant": {"met": true, "trust": true, "gold": 10}}
         },
         "dungeon_data": ["dungeon1", "dungeon2"]
     }
