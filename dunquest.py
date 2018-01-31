@@ -242,15 +242,13 @@ class Merchant(Npc):
                  items_buy=list(),
                  items_sell=list()):
         super().__init__(name, gold)
-        self.merchant = dict()
+        self.merchant = {'healing_potion': {'buy': 4, 'sell': 2}, 'artifact': {'buy': 7, 'sell': 5}, 'purple_liquid': {'buy': 25, 'sell': 23}}
 
     def new(self, name, gold):
-        global merchant
         self.name = name
         self.gold = gold
         self.met = False
         self.trust = False
-        self.merchant = merchant
 
     def trust_test(self):
         if not self.trust:
@@ -385,15 +383,13 @@ class Armorer(Npc):
                  items_buy=list(),
                  items_sell=list()):
         super().__init__(name, gold)
-        self.armorer = dict()
+        self.armorer = armorer = {'leather_boots': {'mod': 1,'buy': 1,'sell': 1},'leather_pants': {'mod': 1,'buy': 2,'sell': 1},'leather_breastplate': {'mod': 2,'buy': 3,'sell': 1},'leather_helmet': {'mod': 1,'buy': 2,'sell': 1},'elven_boots': {'mod': 3,'buy': 5,'sell': 2},'elven_pants': {'mod': 3,'buy': 6,'sell': 3},'elven_breastplate': {'mod': 4,'buy': 7,'sell': 4},'elven_helmet': {'mod': 3,'buy': 5,'sell': 3},'mithril_boots': {'mod': 6,'buy': 10,'sell': 8},'mithril_pants': {'mod': 6,'buy': 11,'sell': 9},'mithril_breastplate': {'mod': 7,'buy': 12,'sell': 10},'mithril_helmet': {'mod': 6,'buy': 10,'sell': 8}}
 
     def new(self, name, gold):
-        global armorer
         self.name = name
         self.gold = gold
         self.met = False
         self.trust = False
-        self.armorer = armorer
 
     def introduction(self):
         self.met = True
@@ -522,15 +518,13 @@ class Blacksmith(Npc):
                  items_buy=list(),
                  items_sell=list()):
         super().__init__(name, gold)
-        self.blacksmith = dict()
+        self.blacksmith = blacksmith = {'rusty_dagger': {'mod': 1,'buy': 2,'sell': 1},'dagger': {'mod': 2,'buy': 5,'sell': 3},'sword': {'mod': 3,'buy': 7,'sell': 5},'battle-axe': {'mod': 4,'buy': 10,'sell': 8},'mace': {'mod': 5,'buy': 8,'sell': 6},'bow': {'mod': 6,'buy': 12,'sell': 10},'spear': {'mod': 7,'buy': 14,'sell': 12},'crossbow': {'mod': 8,'buy': 18,'sell': 16}}
 
     def new(self, name, gold):
-        global blacksmith
         self.name = name
         self.gold = gold
         self.met = False
         self.trust = False
-        self.blacksmith = blacksmith
 
     def introduction(self):
         self.met = True
@@ -660,9 +654,6 @@ class Dungeon():
         self.dungeon = dungeons_dict[dungeon]
         self.current_pos = start_pos
         self.visited = list()
-        self.rooms = dict()
-        for i in self.dungeon:
-            self.rooms[i] = self.dungeon[i]['name']
 
     def check_game_state(self):
         if pl.is_dead():
@@ -678,9 +669,7 @@ class Dungeon():
             str(pl.gold) + ' || Location: ' + str(self.current()))
 
     def game_loop(self):
-        global running
-        global market
-        running = True
+        global market_data
         while self.check_game_state():
             self.dungeon_description()
             self.room_handler()
@@ -688,11 +677,11 @@ class Dungeon():
             scene_splitter()
         self.win_handler()
         try:
-            ma = Market(self.dungeon[100]['market'])
+            ma = Market(self.dungeon["100"]['market'])
             ma.main_market()
             scene_splitter()
-            for _ in ma.market:
-                market[_] = ma.market[_]
+            market_data[self.dungeon["100"]['market']] = dict()
+            market_data[self.dungeon["100"]['market']] = ma.market
         except KeyError:
             pass
         update_pot_files(self.cur_dungeon)
@@ -715,10 +704,7 @@ class Dungeon():
                 print('/' * 70)
                 print('~' * 70)
                 print('/' * 70)
-                try:
-                    input("Press Enter to continue...")
-                except SyntaxError:
-                    pass
+                wfunc()
         except KeyError:
             pass
 
@@ -779,10 +765,7 @@ class Dungeon():
         print('Room where you died: ' + self.dungeon[self.current_pos]['name'])
         pl.inventory_updater()
 
-        try:
-            input("Press Enter to continue...")
-        except SyntaxError:
-            pass
+        wfunc()
         sys.exit(1)
 
     def win_handler(self):
@@ -812,19 +795,8 @@ class Dungeon():
         print('Name: ' + pl.name + ' || HP: ' + str(pl.hp) + '/' +
               str(pl.maxhp) + ' || Gold: ' + str(pl.gold))
         pl.inventory_updater()
-        try:
-            input("Press Enter to continue...")
-        except SyntaxError:
-            pass
+        wfunc()
         print('\n' * 100)
-
-    def no_similar_weapon_equipped(self, item):
-        loot = ['dagger', 'sword', 'battle-axe']
-        loot.remove(item)
-        for element in loot:
-            if element in pl.equipped:
-                return False
-        return True
 
     def battler(self):
         while True:
@@ -942,17 +914,16 @@ class Dungeon():
 
 class Market():
     def __init__(self, location):
-        global savename
+        global savename, save_states, markets
         self.location = location
         self.running = True
         self.market = dict()
-        if ('saves/' + savename + '/' + self.location +
-                '.txt') in get_market_files(savename):
-            self.market[self.location] = load_dungeon(
-                'saves/' + savename + '/' + self.location + '.txt')
+        if savename not in save_states:
+            self.market[self.location] = markets[self.location]
+        elif savename in save_states and self.location in save_states[savename]["market_data"]:
+            self.market[self.location] = save_states[savename]["market_data"][self.location]
         else:
-            self.market[self.location] = load_dungeon(
-                'markets/' + self.location + '.txt')
+            self.market[self.location] = markets[self.location]
 
     def market_description(self):
         print('/' * 70)
@@ -1042,12 +1013,10 @@ class Market():
                 self.running = False
             else:
                 print('Invalid Input.')
-        self.update_ma_files()
+        self.update_ma_state()
 
-    def update_ma_files(self):
-        global npc_merchant
-        global npc_armorer
-        global npc_blacksmith
+    def update_ma_state(self):
+        global npc_merchant, npc_armorer, npc_blacksmith
         self.market[self.location]['visited'] = True
         self.market[self.location]['merchant']['met'] = npc_merchant.met
         self.market[self.location]['merchant']['trust'] = npc_merchant.trust
@@ -1069,60 +1038,54 @@ def remove_repeats(sfr):
     return sf
 
 
-def update_pot_files(current_dun):
-    global dungeons_comp
-    global equipped
-    global inventory
-    global player
-    if str(current_dun) not in dungeons_comp:
+def scene_splitter():
+    print('/' * 70)
+    print('/' * 70)
+    print('/' * 70)
+
+
+def wfunc():
+    try:
+        input("Press Enter to continue...")
+    except SyntaxError:
+        pass
+
+
+def update_pot_files(current_dun): #UPDATED
+    global player_data, dungeon_data
+    
+    if current_dun not in dungeon_data:
+        dungeon_data.append(current_dun)
         dungeons_comp.append(current_dun)
-    for i in pl.equipped:
-        equipped.append(i)
-    for i in pl.inventory:
-        inventory.append(i)
-    player.append(pl.name)
-    player.append(pl.gold)
-    player.append(pl.maxhp)
-    player.append(pl.hp)
-    player.append(pl.ap)
-    player.append(pl.dp)
+
+    player_data["name"] = pl.name
+    player_data["gold"] = pl.gold
+    player_data["maxhp"] = pl.maxhp
+    player_data["hp"] = pl.hp
+    player_data["ap"] = pl.ap
+    player_data["dp"] = pl.dp
+    player_data["inventory"] = pl.inventory
+    player_data["equipped"] = pl.equipped
 
 
-def save_game():
-    global savename
-    global dungeons_comp
-    global equipped
-    global inventory
-    global player
-    global market
-    #Save file
-    create_save_dir(savename)
-    if create_save_files(savename):
-        #Write to dungeons file
-        for i in dungeons_comp:
-            append_to_file('saves/' + savename + '/dungeons.txt', i)
-        #Write to equipped file
-        for i in equipped:
-            append_to_file('saves/' + savename + '/equipped.txt', i)
-        #Write to inventory file
-        for i in inventory:
-            append_to_file('saves/' + savename + '/inventory.txt', i)
-        #Write to player file
-        for i in player:
-            append_to_file('saves/' + savename + '/player.txt', i)
-        #Write to market files
-        for _ in market:
-            write_file('saves/' + savename + '/' + _ + '.txt', '')
-            f = open('saves/' + savename + '/' + _ + '.txt', "w")
-            f.write(str(market[_]))
-            f.close()
+def save_game(): #UPDATED
+    global savename, save_states, player_data, dungeon_data, market_data
+    if not os.path.isfile("Resources/saves.json"):
+        write_file("Resources/saves.json", "")
+
+    if not save_states:
+        save_states = dict()
+    save_states[savename] = dict()
+    save_states[savename]["player_data"] = player_data
+    save_states[savename]["dungeon_data"] = dungeon_data
+    save_states[savename]["market_data"] = market_data
+
+    write_dict_data("Resources/saves.json", save_states)
 
 
-def save_progress():
-    global savename
-    global market
-    global save_dirs
-    update_save_files()
+def save_progress(): #UPDATED
+    global savename, save_names
+    get_save_data()
     menu_state = True
     while menu_state:
         print('Would you like to save your progress?')
@@ -1131,33 +1094,28 @@ def save_progress():
         choice = input('> ')
         if choice == 'yes':
             print('Existing savefiles:')
-            for i in save_dirs:
+            for i in save_names:
                 print('* ' + i)
             print('What would you like your savename to be?')
             savename = input('> ')
-            if valid_file_name(savename) and savename not in save_dirs:
+            if savename not in save_names:
                 save_game()
                 menu_state = False
-            elif valid_file_name(savename) and savename in save_dirs:
-                print('Would you like to overwrite previous savefiles?')
-                print('* yes')
-                print('* no')
-                choice = input('> ')
-                if choice == 'yes':
-                    delete_file_contents('saves/' + savename + '/dungeons.txt')
-                    delete_file_contents('saves/' + savename + '/equipped.txt')
-                    delete_file_contents(
-                        'saves/' + savename + '/inventory.txt')
-                    delete_file_contents('saves/' + savename + '/player.txt')
-                    for _ in market:
-                        delete_file_contents(
-                            'saves/' + savename + '/' + _ + '.txt')
-                    save_game()
-                    menu_state = False
-                elif choice == 'no':
-                    pass
-                else:
-                    print('Invalid input.')
+            elif savename in save_names:
+                temp_menu = True
+                while temp_menu:
+                    print('Would you like to overwrite previous savefiles?')
+                    print('* yes')
+                    print('* no')
+                    choice = input('> ')
+                    if choice == 'yes':
+                        save_game()
+                        temp_menu = False
+                        menu_state = False
+                    elif choice == 'no':
+                        pass
+                    else:
+                        print('Invalid input.')
             else:
                 print('Invalid savename.')
         elif choice == 'no':
@@ -1167,48 +1125,32 @@ def save_progress():
             scene_splitter()
 
 
-def load_game():
-    global dungeons_comp
-    global savename
-    dungeons_comp = file_to_set('saves/' + savename + '/dungeons.txt')
-    _equipped = file_to_set('saves/' + savename + '/equipped.txt')
-    _inventory = file_to_set('saves/' + savename + '/inventory.txt')
-    _player = file_to_set('saves/' + savename + '/player.txt')
-    for i in _equipped:
-        if i != '' and i != ' ':
-            pl.equipped.append(i)
-    for i in _inventory:
-        if i != '' and i != ' ':
-            pl.inventory.append(i)
-    pl.name = _player[0]
-    pl.gold = int(_player[1])
-    pl.maxhp = int(_player[2])
-    pl.hp = int(_player[3])
-    pl.ap = int(_player[4])
-    pl.dp = int(_player[5])
+def load_game(): #UPDATED
+    global dungeons_comp, savename, save_states, market_data
+
+    dungeons_comp = save_states[savename]["dungeon_data"]
+    dungeon_data = save_states[savename]["dungeon_data"]
+    pl.inventory = save_states[savename]["player_data"]["inventory"]
+    pl.equipped = save_states[savename]["player_data"]["equipped"]
+    pl.name = save_states[savename]["player_data"]["name"]
+    pl.gold = save_states[savename]["player_data"]["gold"]
+    pl.maxhp = save_states[savename]["player_data"]["maxhp"]
+    pl.hp = save_states[savename]["player_data"]["hp"]
+    pl.ap = save_states[savename]["player_data"]["ap"]
+    pl.dp = save_states[savename]["player_data"]["dp"]
+    market_data = save_states[savename]["market_data"]
+
     print('Successfully loaded player profile: ' + savename + '.')
+    wfunc()
+
+
+def get_save_data(): #UPDATED
+    global save_states, save_names
     try:
-        input("Press Enter to continue...")
-    except SyntaxError:
-        pass
-
-
-def scene_splitter():
-    print('/' * 70)
-    print('/' * 70)
-    print('/' * 70)
-
-
-def update_save_files():
-    global save_files
-    global savename
-    global save_dirs
-    try:
-        save_dirs_raw = get_dirs('saves/')
-        for _ in save_dirs_raw:
-            if _ != '.DS_Store':
-                save_dirs.append(_)
-        save_dirs = remove_repeats(save_dirs)
+        save_states = load_dungeon('Resources/saves.json')
+        save_names = list()
+        for i in save_states:
+            save_names.append(i)
     except FileNotFoundError:
         pass
 
@@ -1217,12 +1159,15 @@ def update_save_files():
 running = True
 pl = Player('Player')
 dungeons_comp = list()
-equipped = list()
-inventory = list()
-player = list()
+
 savename = ''
-save_dirs = list()
-save_files = list()
+save_states = dict()
+save_names = list()
+player_data = dict()
+dungeon_data = list()
+market_data = dict()
+
+markets = dict()
 market = dict()
 npc_merchant = Merchant()
 npc_armorer = Armorer()
@@ -1359,8 +1304,10 @@ heal_effectors = {
         'desc': 'You consumed a jar of nutella.'
     }
 }
-dungeons_dict = load_dungeon('dungeons/dungeons.json')
-update_save_files()
+
+dungeons_dict = load_dungeon('Resources/dungeons.json')
+markets = load_dungeon('Resources/markets.json')
+get_save_data()
 
 # Main loop
 while running:
@@ -1375,30 +1322,29 @@ while running:
     print('    Welcome to DunQuest! A game of infinite possibilities!')
     print('')
     print('* play')
-    if len(save_dirs) > 0:
+    if len(save_names) > 0:
         print('* load')
     print('* help')
     print('* quit')
     choice = input('> ')
-    if choice == 'load' and len(save_dirs) > 0:
+
+    if choice == 'load' and len(save_names) > 0:
         menu_state = True
+        get_save_data()
         while menu_state:
             print('Existing savefiles:')
-            for i in save_dirs:
+            for i in save_names:
                 print('* ' + i)
             print('What is your savename?')
             savename = input('> ')
-            if valid_file_name(savename) and savename in save_dirs:
+            if savename in save_names:
                 load_game()
                 menu_state = False
             else:
                 print('Invalid savename.')
     elif choice == 'help':
         print('Coming soon.')
-        try:
-            input("Press Enter to continue...")
-        except SyntaxError:
-            pass
+        wfunc()
     elif choice == 'quit':
         running = False
     elif choice == 'play':
@@ -1430,29 +1376,14 @@ while running:
                     du.game_loop()
                 else:
                     print('Please enter a dungeon name you wish to play.')
-                    try:
-                        input("Press Enter to continue...")
-                    except SyntaxError:
-                        pass
+                    wfunc()
             else:
                 print(
                     'Sorry partner, you have completed all available dungeons.'
                 )
                 print('Look out for more soon, or create your own!')
-                try:
-                    input("Press Enter to continue...")
-                except SyntaxError:
-                    pass
-                sys.exit(1)
+                wfunc()
     else:
         print('Invalid Input.')
-        try:
-            input("Press Enter to continue...")
-        except SyntaxError:
-            pass
-'''
-try:
-	input("Press Enter to continue...")
-except SyntaxError:
-	pass
-'''
+        wfunc()
+

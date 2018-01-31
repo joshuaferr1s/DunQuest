@@ -7,6 +7,10 @@ def load_dungeon(file_name):
         dict_from_file = json.load(inf)
     return dict_from_file
 
+def write_dict_data(path, data):
+    with open(path, 'w') as f:
+        json.dump(data, f, indent=4)
+
 
 def borderfy_text(text):
     border = ''
@@ -26,52 +30,13 @@ def borderfy_text(text):
     print(border)
 
 
-def create_save_dir(savename):
-    if not os.path.exists('saves'):
-        os.makedirs('saves')
-    if not os.path.exists('saves/' + savename):
-        os.makedirs('saves/' + savename)
-
-
 def write_file(path, data):
     with open(path, 'w') as f:
         f.write(data)
 
 
-def create_save_files(savename):
-    write_file('saves/' + savename + '/dungeons.txt', '')
-    write_file('saves/' + savename + '/equipped.txt', '')
-    write_file('saves/' + savename + '/inventory.txt', '')
-    write_file('saves/' + savename + '/player.txt', '')
-    return True
-
-
-def append_to_file(path, data):
-    with open(path, 'a') as file:
-        file.write(str(data) + '\n')
-
-
 def delete_file_contents(path):
     open(path, 'w').close()
-
-
-def file_to_set(file_name):
-    results = list()
-    with open(file_name, 'rt') as f:
-        for line in f:
-            results.append(line.replace('\n', ''))
-    return results
-
-
-def valid_file_name(file_name):
-    inva = [
-        '#', '%', '&', '{', '}', "\\", '<', '>', '*', '?', '/', ' ', '$', '!',
-        "'", '"', ':', '@'
-    ]
-    for i in inva:
-        if i in file_name:
-            return False
-    return True
 
 
 def get_market_files(savename):
@@ -80,20 +45,3 @@ def get_market_files(savename):
     for _ in market:
         markets.append('saves/' + savename + '/' + _)
     return markets
-
-
-def get_dirs(path):
-    dirs = os.listdir(path)
-    return dirs
-
-
-def get_files(path):
-    raw_files = os.listdir(path)
-    files = list()
-    result = list()
-    for _ in raw_files:
-        files.append(_.replace('.txt', ''))
-    for _ in files:
-        result.append(_.replace('.json', ''))
-    result.remove('.DS_Store')
-    return result

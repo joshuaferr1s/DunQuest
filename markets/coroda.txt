@@ -1,1 +1,0 @@
-{'name' : 'Coroda', 'visited' : False, 'desc' : 'BLAHhhhh', 'blacksmith' : {'met' : False, 'trust' : False, 'gold' : 15}, 'armorer' : {'met' : False, 'trust' : False, 'gold' : 15}, 'merchant' : {'met' : False, 'trust' : False, 'gold' : 15}}

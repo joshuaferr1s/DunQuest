@@ -1,0 +1,4 @@
+{
+	"azerath" : {"name" : "Azerath", "visited" : false, "desc" : "BLAH", "blacksmith" : {"met" : false, "trust" : false, "gold" : 10}, "armorer" : {"met" : false, "trust" : false, "gold" : 10}, "merchant" : {"met" : false, "trust" : false, "gold" : 10}},
+	"coroda" : {"name" : "Coroda", "visited" : false, "desc" : "BLAHhhhh", "blacksmith" : {"met" : false, "trust" : false, "gold" : 15}, "armorer" : {"met" : false, "trust" : false, "gold" : 15}, "merchant" : {"met" : false, "trust" : false, "gold" : 15}}
+}
