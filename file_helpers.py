@@ -1,7 +1,7 @@
 import os, json
 
 
-def load_dungeon(file_name):
+def load_dict(file_name):
     dict_from_file = {}
     with open(file_name, 'r') as inf:
         dict_from_file = json.load(inf)
@@ -11,6 +11,14 @@ def load_dungeon(file_name):
 def write_dict_data(path, data):
     with open(path, 'w') as f:
         json.dump(data, f, indent=4)
+
+
+def remove_repeats(sfr):
+    sf = list()
+    for k in sfr:
+        if k not in sf:
+            sf.append(k)
+    return sf
 
 
 def borderfy_text(text):
