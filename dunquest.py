@@ -792,11 +792,11 @@ class Dungeon():
             scene_splitter()
         self.win_handler()
         try:
-            ma = Market(self.dungeon["100"]['market'])
+            ma = Market(self.dungeon['100']['market'])
             ma.main_market()
             scene_splitter()
-            game_data['market_data'][self.dungeon["100"]['market']] = dict()
-            game_data['market_data'][self.dungeon["100"]['market']] = ma.market
+            game_data['market_data'][self.dungeon['100']['market']] = dict()
+            game_data['market_data'][self.dungeon['100']['market']] = ma.market
         except KeyError:
             pass
         game_data['dungeons_comp'].append(self.cur_dungeon)
